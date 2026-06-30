@@ -15,14 +15,12 @@ const Report = require('../models/Report');
 const seedData = async () => {
   try {
     // 1. Clean existing database collections
-    console.log('Cleaning database...');
     await User.deleteMany({});
     await DesignerProfile.deleteMany({});
     await PortfolioProject.deleteMany({});
     await Inquiry.deleteMany({});
     await Review.deleteMany({});
     await Report.deleteMany({});
-    console.log('Database cleaned.');
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash('password123', salt);
@@ -32,7 +30,6 @@ const seedData = async () => {
     const adminPasswordHash = await bcrypt.hash(adminPassword, salt);
 
     // 2. Create Admin
-    console.log('Creating Admin...');
     const admin = await User.create({
       name: 'Elena Rostova',
       email: adminEmail,

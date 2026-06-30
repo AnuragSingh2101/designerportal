@@ -59,7 +59,6 @@ connectDB().then(async () => {
     const userCount = await User.countDocuments();
     
     if (userCount === 0) {
-      console.log('In-memory database detected as empty. Running auto-seeding...');
       await seedData();
     } else {
       console.log('Database already has data. Skipping auto-seed.');
