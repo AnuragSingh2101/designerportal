@@ -72,7 +72,7 @@ const DesignerListing = () => {
 
       const endpoint = `/designers?${queryParams.toString()}`;
       const data = await apiFetch(endpoint);
-      setDesigners(data);
+      setDesigners(data.designers || data || []);
     } catch (err) {
       console.error('Error fetching designers:', err);
       setError('Could not load designer directory. Please try again.');

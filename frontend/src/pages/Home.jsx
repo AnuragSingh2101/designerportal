@@ -14,7 +14,8 @@ const Home = () => {
       try {
         const data = await apiFetch('/designers?sort=rating');
         // Slice top 3 designers
-        setFeaturedDesigners(data.slice(0, 3));
+        const designersList = data.designers || data || [];
+        setFeaturedDesigners(designersList.slice(0, 3));
       } catch (err) {
         console.error('Error fetching designers for Home:', err);
       } finally {
