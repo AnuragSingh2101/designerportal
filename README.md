@@ -7,10 +7,8 @@ A full-stack marketplace connecting independent architects and interior designer
 ## 💻 Tech Stack
 - **Frontend**: React.js (Vite), JavaScript, Vanilla CSS3 (Custom theme), React Router Dom, Lucide Icons
 - **Backend**: Node.js + Express.js (REST API, MVC structure)
-- **Database**: MongoDB via Mongoose. Features dual-mode database connection:
-  - Connects to `MONGODB_URI` environment string if specified in `.env`.
-  - Spins up a local `mongodb-memory-server` automatically if empty, ensuring zero-config local runs.
-- **Authentication**: JWT-based security cookies/headers, password hashing using `bcryptjs`, and role-based route guards.
+- **Database**: Database layer via object-document mapper, supporting local memory server and cloud configuration.
+- **Authentication**: JWT-based security cookies/headers, password hashing, and role-based route guards.
 
 ---
 
@@ -18,23 +16,23 @@ A full-stack marketplace connecting independent architects and interior designer
 ```text
 designer-portal/
 ├── backend/
-│   ├── config/          # DB connection helper
-│   ├── controllers/     # API route handler controllers
-│   ├── middleware/      # JWT and role-checking auth middleware
-│   ├── models/          # Mongoose schemas (User, DesignerProfile, Project, Inquiry, Review, Report)
-│   ├── routes/          # Express route bindings
-│   ├── scripts/         # DB seed script
-│   ├── .env             # Environment configuration (Port, JWT Secret)
+│   ├── config/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── scripts/
+│   ├── .env
 │   ├── package.json
-│   └── server.js        # Main Express entrypoint
+│   └── server.js
 └── frontend/
     ├── src/
-    │   ├── components/  # Layouts (Navbar, Footer, StarRating, Lightbox Modal)
-    │   ├── context/     # AuthSession Context and Fetch helper
-    │   ├── pages/       # Home, Login/Register, Listing, Portfolio, Dashboards, Onboarding Wizard
-    │   ├── utils/       # API configuration
-    │   ├── App.jsx      # Navigation routing and guards
-    │   ├── index.css    # Modern Vanilla CSS design system variables
+    │   ├── components/
+    │   ├── context/
+    │   ├── pages/
+    │   ├── utils/
+    │   ├── App.jsx
+    │   ├── index.css
     │   └── main.jsx
     └── package.json
 ```
@@ -50,8 +48,7 @@ cd backend
 npm start
 ```
 - Starts the API server at `http://localhost:5000`.
-- Spins up the MongoDB Memory Server automatically.
-- **Auto-seeds** the database with realistic sample datasets (designers, projects, clients, inquiries, reviews, admin moderation logs) if empty.
+- Auto-seeds the database with realistic sample datasets if empty.
 
 ### 2. Run the Frontend React Client
 Open a new terminal in the frontend directory and run:
@@ -70,7 +67,7 @@ You can use the following pre-seeded logins:
 
 | Role | Email | Password | Details |
 |------|-------|----------|---------|
-| **Administrator** | `admin@designerportal.com` | `admin123` | Elena Rostova (Moderation, Users suspension, Platform stats) |
+| **Administrator** | *Configured in backend `.env`* | *Configured in backend `.env`* | Platform Moderation, User suspension, Platform stats |
 | **Designer Lead** | `julian@vancedesign.com` | `password123` | Julian Vance (SF, Architecture & Interior, 12 yrs exp) |
 | **Designer Decorator** | `amelia@cheninteriors.com` | `password123` | Amelia Chen (NYC, Interior-only, Japandi style) |
 | **Client Member** | `sarah@gmail.com` | `password123` | Sarah Jenkins (Seeded inquiries & reviews with Julian) |
