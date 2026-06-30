@@ -14,7 +14,6 @@ const Report = require('../models/Report');
 
 const seedData = async () => {
   try {
-    // 1. Clean existing database collections
     await User.deleteMany({});
     await DesignerProfile.deleteMany({});
     await PortfolioProject.deleteMany({});
@@ -25,7 +24,7 @@ const seedData = async () => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash('password123', salt);
     
-    const adminEmail = process.env.ADMIN_EMAIL || 'e.rostova.security.admin@designer-portal.internal';
+    const adminEmail = process.env.ADMIN_EMAIL || 'e.rostova.security.admin@gmail.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'K3p!9$wQ#7mZt5&vY1xR2';
     const adminPasswordHash = await bcrypt.hash(adminPassword, salt);
 

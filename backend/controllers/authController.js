@@ -24,12 +24,16 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
+    // Determine role (automatically grant 'admin' if registering with admin credentials)
+    const adminEmail = process.env.ADMIN_EMAIL || 'e.rostova.security.admin@gmail.com';
+    const finalRole = email.toLowerCase() === adminEmail.toLowerCase() ? 'admin' : (role || 'client');
+
     // Create user
     const user = await User.create({
       name,
       email,
       passwordHash,
-      role: role || 'client'
+      role: finalRole
     });
 
     let designerProfile = null;
