@@ -54,15 +54,8 @@ const PORT = process.env.PORT || 5000;
 // Connect DB and then start server
 connectDB().then(async () => {
   try {
-    const User = require('./models/User');
     const seedData = require('./scripts/seed');
-    const userCount = await User.countDocuments();
-    
-    if (userCount === 0) {
-      await seedData();
-    } else {
-      console.log('Database already has data. Skipping auto-seed.');
-    }
+    await seedData();
   } catch (err) {
     console.error('Error during automatic database seeding:', err.message);
   }
@@ -71,3 +64,5 @@ connectDB().then(async () => {
     console.log(`Backend server running on port ${PORT}`);
   });
 });
+// Nodemon trigger comment
+

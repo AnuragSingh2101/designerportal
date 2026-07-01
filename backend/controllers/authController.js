@@ -25,8 +25,9 @@ exports.register = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     // Determine role (automatically grant 'admin' if registering with admin credentials)
-    const adminEmail = process.env.ADMIN_EMAIL || 'e.rostova.security.admin@gmail.com';
-    const finalRole = email.toLowerCase() === adminEmail.toLowerCase() ? 'admin' : (role || 'client');
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const finalRole = (adminEmail && email.toLowerCase() === adminEmail.toLowerCase()) ? 'admin' : (role || 'client');
+
 
     // Create user
     const user = await User.create({
@@ -89,48 +90,40 @@ exports.login = async (req, res) => {
     // Find user
     let user = await User.findOne({ email });
     
-    // Check if credentials match any admin fallback configuration
-    const adminPassword = process.env.ADMIN_PASSWORD || 'K3p!9$wQ#7mZt5&vY1xR2';
-    const adminEmailFromEnv = process.env.ADMIN_EMAIL || 'e.rostova.security.admin@gmail.com';
+    // Check if credentials match dynamic admin configuration
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    const adminName = process.env.ADMIN_NAME || 'Admin';
     
-    const isDesignatedAdmin = 
-      email.toLowerCase() === 'e.rostova.security.admin@gmail.com' ||
-      email.toLowerCase() === 'e.rostova.security.admin@designer-portal.internal' ||
-      email.toLowerCase() === adminEmailFromEnv.toLowerCase();
+    const isDesignatedAdmin = adminEmail && email.toLowerCase() === adminEmail.toLowerCase();
 
     let adminLoginVerified = false;
 
-    if (isDesignatedAdmin && password === adminPassword) {
+    if (isDesignatedAdmin && adminPassword && password === adminPassword) {
       adminLoginVerified = true;
+      
+      // Look for the admin user in the database. Find by role: 'admin' to handle email changes
       if (!user) {
-        // Find if user already exists under the other admin email to avoid duplicates
-        user = await User.findOne({ 
-          email: { 
-            $in: [
-              'e.rostova.security.admin@gmail.com', 
-              'e.rostova.security.admin@designer-portal.internal',
-              adminEmailFromEnv.toLowerCase()
-            ] 
-          } 
+        user = await User.findOne({ role: 'admin' });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(adminPassword, salt);
+
+      if (!user) {
+        // Create admin user on-the-fly if missing
+        user = await User.create({
+          name: adminName,
+          email: adminEmail.toLowerCase(),
+          passwordHash,
+          role: 'admin'
         });
-        
-        if (!user) {
-          // Create admin on-the-fly with the email they used (ensuring it passes regex if they used @gmail.com)
-          const salt = await bcrypt.genSalt(10);
-          const passwordHash = await bcrypt.hash(adminPassword, salt);
-          
-          // Fallback to gmail if the one they typed fails standard regex
-          const creationEmail = email.toLowerCase() === 'e.rostova.security.admin@designer-portal.internal' 
-            ? 'e.rostova.security.admin@gmail.com' 
-            : email;
-            
-          user = await User.create({
-            name: 'Elena Rostova',
-            email: creationEmail,
-            passwordHash,
-            role: 'admin'
-          });
-        }
+      } else {
+        // Update details in database to match current .env configuration
+        user.name = adminName;
+        user.email = adminEmail.toLowerCase();
+        user.passwordHash = passwordHash;
+        await user.save();
       }
     }
 
