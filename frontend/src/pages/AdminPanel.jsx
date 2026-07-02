@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Users, AlertTriangle, BarChart3, Shield, CheckCircle, Ban, Trash2, Calendar } from 'lucide-react';
 
 const AdminPanel = () => {
-  const { apiFetch } = useAuth();
+  const { user, apiFetch, updateUser } = useAuth();
 
   // Active view tab
   const [activeTab, setActiveTab] = useState('analytics'); // 'analytics' | 'users' | 'reports'
@@ -14,6 +14,62 @@ const AdminPanel = () => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Edit Admin Profile States
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState(user?.name || '');
+  const [editPhoto, setEditPhoto] = useState(user?.profilePhoto || '');
+  const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setEditName(user.name || '');
+      setEditPhoto(user.profilePhoto || '');
+    }
+  }, [user]);
+
+  const handleEditPhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 1.5 * 1024 * 1024) {
+        setProfileError('Image file must be under 1.5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditPhoto(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleEditProfileSubmit = async (e) => {
+    e.preventDefault();
+    setProfileError('');
+    setProfileSuccess('');
+    setUpdatingProfile(true);
+
+    try {
+      const data = await apiFetch('/auth/update-profile', {
+        method: 'PUT',
+        body: JSON.stringify({ name: editName, profilePhoto: editPhoto })
+      });
+
+      updateUser(data.user);
+      setProfileSuccess('Profile updated successfully!');
+      setTimeout(() => {
+        setIsEditingProfile(false);
+        setProfileSuccess('');
+      }, 1500);
+    } catch (err) {
+      console.error('Error updating admin profile:', err);
+      setProfileError(err.message || 'Could not update profile.');
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
 
   const loadAdminData = async () => {
     setLoading(true);
@@ -113,17 +169,130 @@ const AdminPanel = () => {
     <div className="container section-padding" style={{ minHeight: 'calc(100vh - var(--navbar-height))' }}>
       
       {/* Admin Panel Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px', borderBottom: '1px solid var(--border-color)', paddingBottom: '20px' }}>
-        <div style={{ width: '48px', height: '48px', backgroundColor: 'var(--color-gold-light)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Shield size={22} style={{ color: 'var(--color-gold)' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', marginBottom: '40px', borderBottom: '1px solid var(--border-color)', paddingBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {user?.profilePhoto ? (
+            <img 
+              src={user.profilePhoto} 
+              alt={user.name} 
+              style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-gold)' }} 
+            />
+          ) : (
+            <div style={{ width: '56px', height: '56px', backgroundColor: 'var(--color-gold-light)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Shield size={26} style={{ color: 'var(--color-gold)' }} />
+            </div>
+          )}
+          <div>
+            <span style={{ fontSize: '12px', color: 'var(--text-light)', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '1px' }}>
+              System Administration
+            </span>
+            <h1 className="serif-title" style={{ fontSize: '32px', marginTop: '4px' }}>Moderation & Analytics Portal</h1>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+              Logged in as: <strong>{user?.name}</strong> ({user?.email})
+            </p>
+          </div>
         </div>
+
         <div>
-          <span style={{ fontSize: '12px', color: 'var(--text-light)', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '1px' }}>
-            System Administration
-          </span>
-          <h1 className="serif-title" style={{ fontSize: '32px', marginTop: '4px' }}>Moderation & Analytics Portal</h1>
+          <button 
+            onClick={() => setIsEditingProfile(!isEditingProfile)} 
+            className="btn btn-secondary btn-sm"
+          >
+            Edit Admin Name/Photo
+          </button>
         </div>
       </div>
+
+      {/* Inline Edit Admin Profile Panel */}
+      {isEditingProfile && (
+        <div className="card" style={{ padding: '24px', marginBottom: '32px', maxWidth: '500px' }}>
+          <h3 style={{ fontSize: '16px', marginBottom: '16px' }}>Edit Admin Details</h3>
+          {profileError && <div className="alert alert-danger">{profileError}</div>}
+          {profileSuccess && <div className="alert alert-success">{profileSuccess}</div>}
+
+          <form onSubmit={handleEditProfileSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="form-group">
+              <label className="form-label">Admin Full Name</label>
+              <input 
+                type="text" 
+                className="form-input" 
+                value={editName} 
+                onChange={(e) => setEditName(e.target.value)} 
+                required 
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Profile Photo</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                {editPhoto ? (
+                  <img 
+                    src={editPhoto} 
+                    alt="Preview" 
+                    style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }} 
+                  />
+                ) : (
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', border: '1px dashed var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'var(--text-light)' }}>
+                    No Photo
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  id="admin-photo-upload" 
+                  onChange={handleEditPhotoUpload} 
+                  style={{ display: 'none' }} 
+                />
+                <label htmlFor="admin-photo-upload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', margin: 0, padding: '6px 12px', fontSize: '12px' }}>
+                  Upload Image
+                </label>
+                {editPhoto && (
+                  <button type="button" onClick={() => setEditPhoto('')} className="btn" style={{ padding: '6px 12px', border: 'none', background: 'transparent', color: 'var(--text-light)', fontSize: '12px' }}>
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Predefined Avatars row */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {[
+                'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix',
+                'https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka',
+                'https://api.dicebear.com/7.x/adventurer/svg?seed=Jack',
+                'https://api.dicebear.com/7.x/adventurer/svg?seed=Sophia'
+              ].map((url, idx) => (
+                <button 
+                  key={idx} 
+                  type="button" 
+                  onClick={() => setEditPhoto(url)} 
+                  style={{ 
+                    width: '32px', 
+                    height: '32px', 
+                    borderRadius: '50%', 
+                    border: editPhoto === url ? '2px solid var(--color-gold)' : '1px solid var(--border-color)', 
+                    padding: 0, 
+                    overflow: 'hidden', 
+                    cursor: 'pointer',
+                    background: 'transparent'
+                  }}
+                >
+                  <img src={url} alt={`Avatar ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+              <button type="submit" className="btn btn-primary btn-sm" disabled={updatingProfile}>
+                {updatingProfile ? 'Saving...' : 'Save'}
+              </button>
+              <button type="button" onClick={() => { setIsEditingProfile(false); setProfileError(''); }} className="btn btn-secondary btn-sm">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Tabs Row */}
       <div style={{ display: 'flex', gap: '20px', borderBottom: '1px solid var(--border-color)', marginBottom: '32px' }}>
