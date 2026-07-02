@@ -441,16 +441,31 @@ const PortfolioDetail = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {reviews.map(rev => (
               <div key={rev._id} style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <strong>{rev.clientId?.name}</strong>
-                  <StarRating rating={rev.rating} size={12} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                  {rev.clientId?.profilePhoto ? (
+                    <img 
+                      src={rev.clientId.profilePhoto} 
+                      alt={rev.clientId.name} 
+                      style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} 
+                    />
+                  ) : (
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>
+                      {rev.clientId?.name?.charAt(0)}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <strong style={{ fontSize: '14px' }}>{rev.clientId?.name}</strong>
+                    <span style={{ fontSize: '11px', color: 'var(--text-light)' }}>
+                      Reviewed on {new Date(rev.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div style={{ marginLeft: 'auto' }}>
+                    <StarRating rating={rev.rating} size={12} />
+                  </div>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', paddingLeft: '42px' }}>
                   {rev.feedback}
                 </p>
-                <span style={{ fontSize: '12px', color: 'var(--text-light)', display: 'block', marginTop: '6px' }}>
-                  Reviewed on {new Date(rev.createdAt).toLocaleDateString()}
-                </span>
               </div>
             ))}
           </div>

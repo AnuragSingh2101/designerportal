@@ -55,7 +55,7 @@ exports.createReview = async (req, res) => {
       avgRating: Number(avgRating.toFixed(1))
     });
 
-    const populatedReview = await Review.findById(review._id).populate('clientId', 'name');
+    const populatedReview = await Review.findById(review._id).populate('clientId', 'name profilePhoto');
     res.status(201).json(populatedReview);
   } catch (error) {
     console.error('createReview error:', error);
@@ -72,7 +72,7 @@ exports.createReview = async (req, res) => {
 exports.getDesignerReviews = async (req, res) => {
   try {
     const reviews = await Review.find({ designerId: req.params.designerId })
-      .populate('clientId', 'name')
+      .populate('clientId', 'name profilePhoto')
       .sort({ createdAt: -1 });
 
     res.json(reviews);

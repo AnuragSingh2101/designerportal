@@ -103,12 +103,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password, role) => {
+  const register = async (name, email, password, role, profilePhoto = '') => {
     setLoading(true);
     try {
       const data = await apiFetch('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ name, email, password, role, profilePhoto }),
       });
 
       localStorage.setItem('token', data.token);
@@ -140,6 +140,10 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   };
 
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   const updateProfileId = (id) => {
     localStorage.setItem('designerProfileId', id);
     setDesignerProfileId(id);
@@ -156,7 +160,8 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         apiFetch,
-        updateProfileId
+        updateProfileId,
+        updateUser
       }}
     >
       {children}

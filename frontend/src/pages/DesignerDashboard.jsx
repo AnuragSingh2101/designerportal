@@ -5,8 +5,68 @@ import StarRating from '../components/StarRating';
 import { Inbox, FolderHeart, Award, Star, Mail, Edit3, Trash2, Plus, X, Send, Save, ArrowLeftRight } from 'lucide-react';
 
 const DesignerDashboard = () => {
-  const { user, designerProfileId, apiFetch } = useAuth();
+  const { user, designerProfileId, apiFetch, updateUser } = useAuth();
   const navigate = useNavigate();
+
+  // Edit User Profile States
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState(user?.name || '');
+  const [editPhoto, setEditPhoto] = useState(user?.profilePhoto || '');
+  const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setEditName(user.name || '');
+      setEditPhoto(user.profilePhoto || '');
+    }
+  }, [user]);
+
+  const handleEditPhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 1.5 * 1024 * 1024) {
+        setProfileError('Image file must be under 1.5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditPhoto(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleEditProfileSubmit = async (e) => {
+    e.preventDefault();
+    setProfileError('');
+    setProfileSuccess('');
+    setUpdatingProfile(true);
+
+    try {
+      const data = await apiFetch('/auth/update-profile', {
+        method: 'PUT',
+        body: JSON.stringify({ name: editName, profilePhoto: editPhoto })
+      });
+
+      updateUser(data.user);
+      
+      // Reload designer data to sync profile
+      await loadDesignerStudioData();
+
+      setProfileSuccess('Profile updated!');
+      setTimeout(() => {
+        setIsEditingProfile(false);
+        setProfileSuccess('');
+      }, 1500);
+    } catch (err) {
+      console.error('Error updating designer profile:', err);
+      setProfileError(err.message || 'Could not update.');
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
 
   // Profile states
   const [profile, setProfile] = useState(null);
@@ -268,11 +328,110 @@ const DesignerDashboard = () => {
             </div>
 
             <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <Link to="/onboarding" className="btn btn-secondary btn-sm" style={{ width: '100%' }}>
+              {!isEditingProfile ? (
+                <button 
+                  onClick={() => setIsEditingProfile(true)} 
+                  className="btn btn-secondary btn-sm" 
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                >
+                  <Edit3 size={12} />
+                  <span>Edit Name / Photo</span>
+                </button>
+              ) : (
+                <form onSubmit={handleEditProfileSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', textAlign: 'left' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '600' }}>Edit Name & Photo</span>
+                  
+                  {profileError && <div className="alert alert-danger" style={{ fontSize: '11px', padding: '6px' }}>{profileError}</div>}
+                  {profileSuccess && <div className="alert alert-success" style={{ fontSize: '11px', padding: '6px' }}>{profileSuccess}</div>}
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '11px' }}>Full Name</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      style={{ padding: '6px 10px', fontSize: '13px' }}
+                      value={editName} 
+                      onChange={(e) => setEditName(e.target.value)} 
+                      required 
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '11px' }}>Profile Photo</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {editPhoto ? (
+                        <img 
+                          src={editPhoto} 
+                          alt="Edit preview" 
+                          style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} 
+                        />
+                      ) : (
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', border: '1px dashed var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'var(--text-light)' }}>
+                          None
+                        </div>
+                      )}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        id="edit-designer-photo" 
+                        onChange={handleEditPhotoUpload} 
+                        style={{ display: 'none' }} 
+                      />
+                      <label htmlFor="edit-designer-photo" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', padding: '4px 8px', fontSize: '11px', margin: 0 }}>
+                        Change
+                      </label>
+                      {editPhoto && (
+                        <button type="button" onClick={() => setEditPhoto('')} className="btn btn-sm" style={{ padding: '4px 8px', fontSize: '11px', border: 'none', background: 'transparent', color: 'var(--text-light)' }}>
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Predefined Avatars row in Edit Profile */}
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {[
+                      'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix',
+                      'https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka',
+                      'https://api.dicebear.com/7.x/adventurer/svg?seed=Jack',
+                      'https://api.dicebear.com/7.x/adventurer/svg?seed=Sophia'
+                    ].map((url, idx) => (
+                      <button 
+                        key={idx} 
+                        type="button" 
+                        onClick={() => setEditPhoto(url)} 
+                        style={{ 
+                          width: '24px', 
+                          height: '24px', 
+                          borderRadius: '50%', 
+                          border: editPhoto === url ? '1.5px solid var(--color-gold)' : '1px solid var(--border-color)', 
+                          padding: 0, 
+                          overflow: 'hidden', 
+                          cursor: 'pointer',
+                          background: 'transparent'
+                        }}
+                      >
+                        <img src={url} alt={`Avatar ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </button>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                    <button type="submit" className="btn btn-primary btn-sm" style={{ flex: 1, padding: '6px', fontSize: '11px' }} disabled={updatingProfile}>
+                      {updatingProfile ? 'Saving...' : 'Save'}
+                    </button>
+                    <button type="button" onClick={() => { setIsEditingProfile(false); setProfileError(''); }} className="btn btn-secondary btn-sm" style={{ flex: 1, padding: '6px', fontSize: '11px' }}>
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              <Link to="/onboarding" className="btn btn-secondary btn-sm" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                 <Edit3 size={12} />
-                <span>Edit Profile Info</span>
+                <span>Edit Studio Profile</span>
               </Link>
-              <Link to={`/designers/${profile._id}`} className="btn btn-primary btn-sm" style={{ width: '100%' }}>
+              <Link to={`/designers/${profile._id}`} className="btn btn-primary btn-sm" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                 <span>Public Portfolio</span>
               </Link>
             </div>

@@ -4,10 +4,66 @@ import { useAuth } from '../context/AuthContext';
 import { MessageSquare, Calendar, DollarSign, Send, FolderClosed, ExternalLink, ArrowRight, Star } from 'lucide-react';
 
 const ClientDashboard = () => {
-  const { user, apiFetch } = useAuth();
+  const { user, apiFetch, updateUser } = useAuth();
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Edit Profile States
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState(user?.name || '');
+  const [editPhoto, setEditPhoto] = useState(user?.profilePhoto || '');
+  const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setEditName(user.name || '');
+      setEditPhoto(user.profilePhoto || '');
+    }
+  }, [user]);
+
+  const handleEditPhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 1.5 * 1024 * 1024) {
+        setProfileError('Image file must be under 1.5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditPhoto(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleEditProfileSubmit = async (e) => {
+    e.preventDefault();
+    setProfileError('');
+    setProfileSuccess('');
+    setUpdatingProfile(true);
+
+    try {
+      const data = await apiFetch('/auth/update-profile', {
+        method: 'PUT',
+        body: JSON.stringify({ name: editName, profilePhoto: editPhoto })
+      });
+
+      updateUser(data.user);
+      setProfileSuccess('Profile updated successfully!');
+      setTimeout(() => {
+        setIsEditingProfile(false);
+        setProfileSuccess('');
+      }, 1500);
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      setProfileError(err.message || 'Could not update profile.');
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
 
   // Thread reply states
   const [activeInquiryId, setActiveInquiryId] = useState(null);
@@ -88,9 +144,17 @@ const ClientDashboard = () => {
         {/* Sidebar Info */}
         <aside className="dashboard-sidebar">
           <div style={{ textAlign: 'center', marginBottom: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '20px' }}>
-            <div className="clientdashboard-style-1">
-              {user?.name.charAt(0)}
-            </div>
+            {user?.profilePhoto ? (
+              <img 
+                src={user.profilePhoto} 
+                alt={user.name} 
+                style={{ width: '72px', height: '72px', borderRadius: '50%', objectFit: 'cover', margin: '0 auto 12px', border: '2px solid var(--color-gold)', display: 'block' }} 
+              />
+            ) : (
+              <div className="clientdashboard-style-1">
+                {user?.name?.charAt(0)}
+              </div>
+            )}
             <h3 style={{ fontSize: '18px' }}>{user?.name}</h3>
             <span style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-light)', fontWeight: '600', letterSpacing: '0.5px' }}>
               Client Member
@@ -101,6 +165,107 @@ const ClientDashboard = () => {
             <div>
               <span className="form-label" style={{ fontSize: '12px' }}>Account Email</span>
               <span style={{ fontSize: '14px', color: 'var(--text-secondary)', wordBreak: 'break-all' }}>{user?.email}</span>
+            </div>
+
+            {/* Edit Profile Toggle / Form */}
+            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+              {!isEditingProfile ? (
+                <button 
+                  onClick={() => setIsEditingProfile(true)} 
+                  className="btn btn-secondary btn-sm" 
+                  style={{ width: '100%', padding: '8px', fontSize: '12px' }}
+                >
+                  Edit Profile Info
+                </button>
+              ) : (
+                <form onSubmit={handleEditProfileSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '600' }}>Edit Profile</span>
+                  
+                  {profileError && <div className="alert alert-danger" style={{ fontSize: '11px', padding: '6px' }}>{profileError}</div>}
+                  {profileSuccess && <div className="alert alert-success" style={{ fontSize: '11px', padding: '6px' }}>{profileSuccess}</div>}
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '11px' }}>Full Name</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      style={{ padding: '6px 10px', fontSize: '13px' }}
+                      value={editName} 
+                      onChange={(e) => setEditName(e.target.value)} 
+                      required 
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '11px' }}>Profile Photo</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {editPhoto ? (
+                        <img 
+                          src={editPhoto} 
+                          alt="Edit preview" 
+                          style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} 
+                        />
+                      ) : (
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', border: '1px dashed var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'var(--text-light)' }}>
+                          None
+                        </div>
+                      )}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        id="edit-profile-photo" 
+                        onChange={handleEditPhotoUpload} 
+                        style={{ display: 'none' }} 
+                      />
+                      <label htmlFor="edit-profile-photo" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', padding: '4px 8px', fontSize: '11px', margin: 0 }}>
+                        Change
+                      </label>
+                      {editPhoto && (
+                        <button type="button" onClick={() => setEditPhoto('')} className="btn btn-sm" style={{ padding: '4px 8px', fontSize: '11px', border: 'none', background: 'transparent', color: 'var(--text-light)' }}>
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Predefined Avatars row in Edit Profile */}
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {[
+                      'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix',
+                      'https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka',
+                      'https://api.dicebear.com/7.x/adventurer/svg?seed=Jack',
+                      'https://api.dicebear.com/7.x/adventurer/svg?seed=Sophia'
+                    ].map((url, idx) => (
+                      <button 
+                        key={idx} 
+                        type="button" 
+                        onClick={() => setEditPhoto(url)} 
+                        style={{ 
+                          width: '24px', 
+                          height: '24px', 
+                          borderRadius: '50%', 
+                          border: editPhoto === url ? '1.5px solid var(--color-gold)' : '1px solid var(--border-color)', 
+                          padding: 0, 
+                          overflow: 'hidden', 
+                          cursor: 'pointer',
+                          background: 'transparent'
+                        }}
+                      >
+                        <img src={url} alt={`Avatar ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </button>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                    <button type="submit" className="btn btn-primary btn-sm" style={{ flex: 1, padding: '6px', fontSize: '11px' }} disabled={updatingProfile}>
+                      {updatingProfile ? 'Saving...' : 'Save'}
+                    </button>
+                    <button type="button" onClick={() => { setIsEditingProfile(false); setProfileError(''); }} className="btn btn-secondary btn-sm" style={{ flex: 1, padding: '6px', fontSize: '11px' }}>
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
 
             <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>

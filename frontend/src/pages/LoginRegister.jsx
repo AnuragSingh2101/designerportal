@@ -16,6 +16,29 @@ const LoginRegister = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState('');
+
+  const defaultAvatars = [
+    'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix',
+    'https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka',
+    'https://api.dicebear.com/7.x/adventurer/svg?seed=Jack',
+    'https://api.dicebear.com/7.x/adventurer/svg?seed=Sophia'
+  ];
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 1.5 * 1024 * 1024) {
+        setError('Image file must be under 1.5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePhoto(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // States
   const [error, setError] = useState('');
@@ -68,7 +91,7 @@ const LoginRegister = () => {
         }
       } else {
         // Register
-        const user = await register(name, email, password, role);
+        const user = await register(name, email, password, role, profilePhoto);
         setSuccess('Account created successfully!');
         
         // If designer, route to profile onboarding wizard, otherwise to client dashboard
@@ -120,10 +143,10 @@ const LoginRegister = () => {
               <div className="form-group" style={{ marginBottom: '8px' }}>
                 <span className="form-label">I want to register as a:</span>
                 <div style={{ display: 'flex', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-                  <button type="button" onClick={() => setRole('client')} className="loginregister-style-2" style={{background: role === 'client' ? 'var(--text-primary)' : 'transparent', color: role === 'client' ? '#ffffff' : 'var(--text-primary)'}}>
+                  <button type="button" onClick={() => setRole('client')} className="loginregister-style-2" style={{background: role === 'client' ? 'var(--btn-primary-bg)' : 'transparent', color: role === 'client' ? 'var(--btn-primary-text)' : 'var(--text-primary)'}}>
                     Client
                   </button>
-                  <button type="button" onClick={() => setRole('designer')} className="loginregister-style-3" style={{background: role === 'designer' ? 'var(--text-primary)' : 'transparent', color: role === 'designer' ? '#ffffff' : 'var(--text-primary)'}}>
+                  <button type="button" onClick={() => setRole('designer')} className="loginregister-style-3" style={{background: role === 'designer' ? 'var(--btn-primary-bg)' : 'transparent', color: role === 'designer' ? 'var(--btn-primary-text)' : 'var(--text-primary)'}}>
                     Designer
                   </button>
                 </div>
@@ -139,6 +162,64 @@ const LoginRegister = () => {
                   onChange={(e) => setName(e.target.value)}
                   disabled={loading}
                 />
+              </div>
+
+              {/* Profile Photo Upload/Selector */}
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label className="form-label">Profile Photo (Optional)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  {profilePhoto ? (
+                    <img 
+                      src={profilePhoto} 
+                      alt="Preview" 
+                      style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-gold)' }} 
+                    />
+                  ) : (
+                    <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', border: '1px dashed var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-light)', fontSize: '11px', fontWeight: '500' }}>
+                      No Photo
+                    </div>
+                  )}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handlePhotoUpload} 
+                      style={{ display: 'none' }} 
+                      id="signup-photo-upload" 
+                    />
+                    <label htmlFor="signup-photo-upload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', textAlign: 'center', width: 'fit-content', padding: '6px 12px', fontSize: '12px' }}>
+                      Upload Photo
+                    </label>
+                    <span style={{ fontSize: '11px', color: 'var(--text-light)' }}>
+                      Or choose an avatar below:
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Default Avatar List */}
+                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                  {defaultAvatars.map((url, idx) => (
+                    <button 
+                      key={idx} 
+                      type="button" 
+                      onClick={() => setProfilePhoto(url)} 
+                      style={{ 
+                        width: '36px', 
+                        height: '36px', 
+                        borderRadius: '50%', 
+                        border: profilePhoto === url ? '2px solid var(--color-gold)' : '1px solid var(--border-color)', 
+                        padding: 0, 
+                        overflow: 'hidden', 
+                        cursor: 'pointer',
+                        transform: profilePhoto === url ? 'scale(1.15)' : 'none',
+                        transition: 'all 0.2s ease',
+                        background: 'transparent'
+                      }}
+                    >
+                      <img src={url} alt={`Avatar ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </button>
+                  ))}
+                </div>
               </div>
             </>
           )}

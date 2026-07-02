@@ -11,7 +11,7 @@ const cleanEnvVar = (val) => val ? val.replace(/^['"]|['"]$/g, '') : val;
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, profilePhoto } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Please provide name, email, and password' });
@@ -37,7 +37,8 @@ exports.register = async (req, res) => {
       name,
       email,
       passwordHash,
-      role: finalRole
+      role: finalRole,
+      profilePhoto: profilePhoto || ''
     });
 
     let designerProfile = null;
@@ -52,7 +53,7 @@ exports.register = async (req, res) => {
         budgetMin: 0,
         budgetMax: 0,
         bio: 'Welcome to my portfolio profile! Edit this to tell clients about yourself.',
-        profilePhotoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop'
+        profilePhotoUrl: profilePhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop'
       });
     }
 
@@ -69,7 +70,8 @@ exports.register = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        profilePhoto: user.profilePhoto
       },
       designerProfileId: designerProfile ? designerProfile._id : null
     });
@@ -170,7 +172,8 @@ exports.login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        profilePhoto: user.profilePhoto
       },
       designerProfileId
     });
@@ -198,12 +201,55 @@ exports.getMe = async (req, res) => {
         id: req.user._id,
         name: req.user.name,
         email: req.user.email,
-        role: req.user.role
+        role: req.user.role,
+        profilePhoto: req.user.profilePhoto
       },
       designerProfileId
     });
   } catch (error) {
     console.error('getMe error:', error);
     res.status(500).json({ message: 'Server error retrieving current user' });
+  }
+};
+
+// @desc    Update current user profile (name and profilePhoto only)
+// @route   PUT /api/auth/update-profile
+// @access  Private
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, profilePhoto } = req.body;
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (name) user.name = name;
+    if (profilePhoto !== undefined) {
+      user.profilePhoto = profilePhoto;
+      // If designer, sync profilePhoto to DesignerProfile.profilePhotoUrl
+      if (user.role === 'designer') {
+        await DesignerProfile.findOneAndUpdate(
+          { userId: user._id },
+          { profilePhotoUrl: profilePhoto }
+        );
+      }
+    }
+
+    await user.save();
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profilePhoto: user.profilePhoto
+      }
+    });
+  } catch (error) {
+    console.error('updateProfile error:', error);
+    res.status(500).json({ message: 'Server error updating profile' });
   }
 };
