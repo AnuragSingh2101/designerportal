@@ -52,14 +52,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 // Connect DB and then start server
-connectDB().then(async () => {
-  try {
-    const seedData = require('./scripts/seed');
-    await seedData();
-  } catch (err) {
-    console.error('Error during automatic database seeding:', err.message);
-  }
-
+connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Backend server running on port ${PORT}`);
   });

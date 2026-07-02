@@ -1,17 +1,11 @@
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
-
-let mongoServer = null;
 
 const connectDB = async () => {
   try {
-    let dbUri = process.env.MONGODB_URI;
+    const dbUri = process.env.MONGODB_URI;
 
     if (!dbUri) {
-      console.log('No MONGODB_URI found in environment. Spinning up MongoMemoryServer...');
-      mongoServer = await MongoMemoryServer.create();
-      dbUri = mongoServer.getUri();
-      console.log(`MongoMemoryServer started at: ${dbUri}`);
+      throw new Error('MONGODB_URI is not defined in environment variables.');
     }
 
     const conn = await mongoose.connect(dbUri);
@@ -26,10 +20,7 @@ const connectDB = async () => {
 const closeDB = async () => {
   try {
     await mongoose.disconnect();
-    if (mongoServer) {
-      await mongoServer.stop();
-      console.log('MongoMemoryServer stopped.');
-    }
+    console.log('MongoDB connection closed.');
   } catch (error) {
     console.error(`Error closing database: ${error.message}`);
   }
