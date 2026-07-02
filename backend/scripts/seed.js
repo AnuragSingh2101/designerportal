@@ -6,11 +6,13 @@ const { connectDB, closeDB } = require('../config/db');
 
 const User = require('../models/User');
 
+const cleanEnvVar = (val) => val ? val.replace(/^['"]|['"]$/g, '') : val;
+
 const seedData = async () => {
   try {
-    const adminName = process.env.ADMIN_NAME;
-    const adminEmail = process.env.ADMIN_EMAIL;
-    const adminPassword = process.env.ADMIN_PASSWORD;
+    const adminName = cleanEnvVar(process.env.ADMIN_NAME);
+    const adminEmail = cleanEnvVar(process.env.ADMIN_EMAIL);
+    const adminPassword = cleanEnvVar(process.env.ADMIN_PASSWORD);
 
     if (!adminName || !adminEmail || !adminPassword) {
       console.error('Error: ADMIN_NAME, ADMIN_EMAIL, and ADMIN_PASSWORD must be defined in the .env file.');

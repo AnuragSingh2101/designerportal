@@ -3,6 +3,9 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const DesignerProfile = require('../models/DesignerProfile');
 
+const cleanEnvVar = (val) => val ? val.replace(/^['"]|['"]$/g, '') : val;
+
+
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
@@ -25,7 +28,7 @@ exports.register = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     // Determine role (automatically grant 'admin' if registering with admin credentials)
-    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminEmail = cleanEnvVar(process.env.ADMIN_EMAIL);
     const finalRole = (adminEmail && email.toLowerCase() === adminEmail.toLowerCase()) ? 'admin' : (role || 'client');
 
 
@@ -91,9 +94,9 @@ exports.login = async (req, res) => {
     let user = await User.findOne({ email });
     
     // Check if credentials match dynamic admin configuration
-    const adminEmail = process.env.ADMIN_EMAIL;
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    const adminName = process.env.ADMIN_NAME || 'Admin';
+    const adminEmail = cleanEnvVar(process.env.ADMIN_EMAIL);
+    const adminPassword = cleanEnvVar(process.env.ADMIN_PASSWORD);
+    const adminName = cleanEnvVar(process.env.ADMIN_NAME) || 'Admin';
     
     const isDesignatedAdmin = adminEmail && email.toLowerCase() === adminEmail.toLowerCase();
 
