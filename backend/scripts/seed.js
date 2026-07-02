@@ -55,7 +55,6 @@ const seedData = async () => {
   }
 };
 
-// Run script if executed directly
 if (require.main === module) {
   connectDB().then(async () => {
     await seedData();
