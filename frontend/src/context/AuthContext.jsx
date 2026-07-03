@@ -19,6 +19,15 @@ export const AuthProvider = ({ children }) => {
   const [designerProfileId, setDesignerProfileId] = useState(localStorage.getItem('designerProfileId') || null);
   const [loading, setLoading] = useState(true);
 
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('designerProfileId');
+    setToken(null);
+    setUser(null);
+    setDesignerProfileId(null);
+    setLoading(false);
+  };
+
   // Configure axios-like fetch helper
   const apiFetch = async (endpoint, options = {}) => {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -40,6 +49,9 @@ export const AuthProvider = ({ children }) => {
     const data = await response.json();
 
     if (!response.ok) {
+      if (response.status === 401) {
+        logout();
+      }
       throw new Error(data.message || 'Something went wrong');
     }
 
@@ -129,15 +141,6 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('designerProfileId');
-    setToken(null);
-    setUser(null);
-    setDesignerProfileId(null);
-    setLoading(false);
   };
 
   const updateUser = (updatedUser) => {

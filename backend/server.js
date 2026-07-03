@@ -2,6 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { connectDB } = require('./config/db');
+const { validateEnv } = require('./config/envCheck');
+const { securityHeaders } = require('./middleware/securityHeaders');
+const { sanitizeInput } = require('./middleware/sanitize');
+const logger = require('./utils/logger');
+
+// Run environment configuration check
+validateEnv();
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -13,13 +20,47 @@ const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
+// Trust proxy if behind a load balancer (for correct rate limiter IP tracking)
+app.set('trust proxy', 1);
 
-// Request logger for local development
+// Configure CORS
+const allowedOriginsVal = process.env.ALLOWED_ORIGINS;
+let corsOptions = {};
+if (allowedOriginsVal) {
+  const origins = allowedOriginsVal.split(',').map(o => o.trim());
+  corsOptions = {
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin || origins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        logger.warn('CORS request blocked from origin', { origin });
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true
+  };
+} else {
+  // In development, default to allowing local origins
+  corsOptions = {
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    credentials: true
+  };
+}
+
+// Middlewares
+app.use(cors(corsOptions));
+app.use(securityHeaders);
+app.use(express.json({ limit: '10kb' })); // Limit body sizes to prevent DoS memory exhaustion
+app.use(sanitizeInput);
+
+// Structured logger for incoming API requests
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
+  logger.info('Incoming request', {
+    method: req.method,
+    path: req.path,
+    ip: req.ip
+  });
   next();
 });
 
@@ -40,11 +81,15 @@ app.get('/', (req, res) => {
   });
 });
 
-// Error handling middleware
+// Global error handling middleware (masks system details in production)
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    message: 'Something went wrong on the server',
+  logger.error('Unhandled application error occurred', {
+    message: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+  
+  res.status(err.status || 500).json({
+    message: err.message || 'Something went wrong on the server',
     error: process.env.NODE_ENV === 'development' ? err.message : {}
   });
 });
@@ -54,8 +99,6 @@ const PORT = process.env.PORT || 5000;
 // Connect DB and then start server
 connectDB().then(() => {
   app.listen(PORT, () => {
-    console.log(`Backend server running on port ${PORT}`);
+    logger.info(`Backend server running on port ${PORT}`);
   });
 });
-// Nodemon trigger comment
-

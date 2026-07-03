@@ -4,40 +4,69 @@ const PortfolioProject = require('../models/PortfolioProject');
 const Inquiry = require('../models/Inquiry');
 const Review = require('../models/Review');
 const Report = require('../models/Report');
+const logger = require('../utils/logger');
 
-// @desc    Get all users
+// @desc    Get all users with their designer profiles attached efficiently
 // @route   GET /api/admin/users
 // @access  Private (Admin only)
 exports.getUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-passwordHash').sort({ createdAt: -1 });
-    
-    // Attach additional info like location if designer
-    const profiles = await DesignerProfile.find();
-    const profileMap = {};
-    profiles.forEach(p => {
-      profileMap[p.userId.toString()] = p;
-    });
-
-    const usersWithProfiles = users.map(user => {
-      const u = user.toObject();
-      if (u.role === 'designer') {
-        const profile = profileMap[u._id.toString()];
-        if (profile) {
-          u.designerProfile = {
-            id: profile._id,
-            location: profile.location,
-            expertise: profile.expertise,
-            avgRating: profile.avgRating
-          };
+    const usersWithProfiles = await User.aggregate([
+      { $sort: { createdAt: -1 } },
+      {
+        $project: {
+          passwordHash: 0,
+          resetPasswordToken: 0,
+          resetPasswordExpires: 0,
+          emailVerificationToken: 0,
+          emailVerificationExpires: 0
+        }
+      },
+      {
+        $lookup: {
+          from: 'designerprofiles',
+          localField: '_id',
+          foreignField: 'userId',
+          as: 'profile'
+        }
+      },
+      {
+        $addFields: {
+          designerProfile: {
+            $cond: {
+              if: { $eq: ['$role', 'designer'] },
+              then: {
+                $let: {
+                  vars: { firstProfile: { $arrayElemAt: ['$profile', 0] } },
+                  in: {
+                    $cond: {
+                      if: { $gt: [{ $type: '$$firstProfile' }, 'missing'] },
+                      then: {
+                        id: '$$firstProfile._id',
+                        location: '$$firstProfile.location',
+                        expertise: '$$firstProfile.expertise',
+                        avgRating: '$$firstProfile.avgRating'
+                      },
+                      else: null
+                    }
+                  }
+                }
+              },
+              else: null
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          profile: 0
         }
       }
-      return u;
-    });
+    ]);
 
     res.json(usersWithProfiles);
   } catch (error) {
-    console.error('getUsers error:', error);
+    logger.error('getUsers admin error', { error: error.message });
     res.status(500).json({ message: 'Server error retrieving users' });
   }
 };
@@ -59,6 +88,12 @@ exports.toggleSuspendUser = async (req, res) => {
     user.suspended = !user.suspended;
     await user.save();
 
+    logger.warn(`User account status modified`, {
+      targetUserId: user._id,
+      suspended: user.suspended,
+      performedBy: req.user._id
+    });
+
     res.json({
       message: `User account has been ${user.suspended ? 'suspended' : 'unsuspended'}`,
       user: {
@@ -70,7 +105,7 @@ exports.toggleSuspendUser = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('toggleSuspendUser error:', error);
+    logger.error('toggleSuspendUser admin error', { error: error.message });
     res.status(500).json({ message: 'Server error updating user suspension status' });
   }
 };
@@ -116,9 +151,15 @@ exports.deleteUser = async (req, res) => {
     // Delete user
     await User.findByIdAndDelete(userId);
 
+    logger.warn(`User account deleted permanently by admin`, {
+      deletedUserId: userId,
+      deletedUserEmail: user.email,
+      performedBy: req.user._id
+    });
+
     res.json({ message: 'User and all related content deleted successfully' });
   } catch (error) {
-    console.error('deleteUser error:', error);
+    logger.error('deleteUser admin error', { error: error.message });
     res.status(500).json({ message: 'Server error deleting user' });
   }
 };
@@ -176,7 +217,7 @@ exports.getAnalytics = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('getAnalytics error:', error);
+    logger.error('getAnalytics admin error', { error: error.message });
     res.status(500).json({ message: 'Server error compiling analytics' });
   }
 };
@@ -192,7 +233,7 @@ exports.getReports = async (req, res) => {
 
     res.json(reports);
   } catch (error) {
-    console.error('getReports error:', error);
+    logger.error('getReports admin error', { error: error.message });
     res.status(500).json({ message: 'Server error fetching reports list' });
   }
 };
@@ -204,10 +245,6 @@ exports.submitReport = async (req, res) => {
   try {
     const { targetType, targetId, reason } = req.body;
 
-    if (!targetType || !targetId || !reason) {
-      return res.status(400).json({ message: 'Please provide targetType, targetId, and reason' });
-    }
-
     const report = await Report.create({
       reportedBy: req.user._id,
       targetType,
@@ -216,9 +253,16 @@ exports.submitReport = async (req, res) => {
       status: 'open'
     });
 
+    logger.warn('Report submitted by user', {
+      reportId: report._id,
+      reportedBy: req.user._id,
+      targetType,
+      targetId
+    });
+
     res.status(201).json(report);
   } catch (error) {
-    console.error('submitReport error:', error);
+    logger.error('submitReport error', { error: error.message });
     res.status(500).json({ message: 'Server error submitting report' });
   }
 };
@@ -236,9 +280,14 @@ exports.resolveReport = async (req, res) => {
     report.status = 'resolved';
     await report.save();
 
+    logger.info('Moderation report resolved by admin', {
+      reportId: report._id,
+      resolvedBy: req.user._id
+    });
+
     res.json({ message: 'Report has been successfully resolved', report });
   } catch (error) {
-    console.error('resolveReport error:', error);
+    logger.error('resolveReport admin error', { error: error.message });
     res.status(500).json({ message: 'Server error resolving report' });
   }
 };

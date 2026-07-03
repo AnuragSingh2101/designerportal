@@ -1,6 +1,12 @@
 const DesignerProfile = require('../models/DesignerProfile');
 const User = require('../models/User');
 const Inquiry = require('../models/Inquiry');
+const logger = require('../utils/logger');
+
+const escapeRegex = (string) => {
+  if (!string || typeof string !== 'string') return '';
+  return string.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+};
 
 // @desc    Get all designers with search, filter, and sort
 // @route   GET /api/designers
@@ -16,18 +22,19 @@ exports.getDesigners = async (req, res) => {
 
     let query = {};
 
-    // 1. Search name or bio
+    // 1. Search name or bio (escaped to prevent ReDoS)
     if (search) {
+      const escapedSearch = escapeRegex(search);
       const matchingUsers = await User.find({
-        name: { $regex: search, $options: 'i' },
+        name: { $regex: escapedSearch, $options: 'i' },
         role: 'designer'
       });
       const userIds = matchingUsers.map(u => u._id);
 
       query.$or = [
         { userId: { $in: userIds } },
-        { bio: { $regex: search, $options: 'i' } },
-        { location: { $regex: search, $options: 'i' } }
+        { bio: { $regex: escapedSearch, $options: 'i' } },
+        { location: { $regex: escapedSearch, $options: 'i' } }
       ];
     }
 
@@ -39,10 +46,11 @@ exports.getDesigners = async (req, res) => {
 
     // 3. Filter by location
     if (location && location !== 'All') {
-      query.location = { $regex: location, $options: 'i' };
+      const escapedLoc = escapeRegex(location);
+      query.location = { $regex: escapedLoc, $options: 'i' };
     }
 
-    // 4. Filter by Budget Range (overlapping)
+    // 4. Filter by Budget Range
     if (budgetMin) {
       query.budgetMax = { $gte: Number(budgetMin) };
     }
@@ -55,52 +63,58 @@ exports.getDesigners = async (req, res) => {
       query.experienceYears = { $gte: Number(experienceMin) };
     }
 
-    // Define Sorting
-    let sortOptions = {};
-    if (sort === 'rating') {
-      sortOptions = { avgRating: -1 };
-    } else if (sort === 'newest') {
-      sortOptions = { createdAt: -1 };
-    } else if (sort === 'experience') {
-      sortOptions = { experienceYears: -1 };
-    } else {
-      // Default: sort by average rating
-      sortOptions = { avgRating: -1 };
-    }
+    // Build aggregation pipeline for sorting, pagination, and counts
+    const matchStage = { $match: query };
+    const countPipeline = [matchStage, { $count: 'total' }];
+    
+    const countResult = await DesignerProfile.aggregate(countPipeline);
+    const total = countResult.length > 0 ? countResult[0].total : 0;
 
-    let total = 0;
-    let designers = [];
+    const pipeline = [matchStage];
 
-    // If sorting by "popularity", we sort by number of inquiries in-memory
+    // Popularity sort joins with inquiries and counts them inside MongoDB
     if (sort === 'popularity') {
-      // Fetch all matching designers for sorting
-      designers = await DesignerProfile.find(query)
-        .populate('userId', 'name email role');
-
-      const inquiries = await Inquiry.aggregate([
-        { $group: { _id: '$designerId', count: { $sum: 1 } } }
-      ]);
-      const inquiryMap = {};
-      inquiries.forEach(i => {
-        inquiryMap[i._id.toString()] = i.count;
-      });
-
-      designers = designers.sort((a, b) => {
-        const countA = inquiryMap[a._id.toString()] || 0;
-        const countB = inquiryMap[b._id.toString()] || 0;
-        return countB - countA; // descending order of popularity
-      });
-
-      total = designers.length;
-      designers = designers.slice(skip, skip + limit);
+      pipeline.push(
+        {
+          $lookup: {
+            from: 'inquiries',
+            localField: '_id',
+            foreignField: 'designerId',
+            as: 'inquiries'
+          }
+        },
+        {
+          $addFields: {
+            inquiryCount: { $size: '$inquiries' }
+          }
+        },
+        { $sort: { inquiryCount: -1, _id: 1 } }
+      );
     } else {
-      total = await DesignerProfile.countDocuments(query);
-      designers = await DesignerProfile.find(query)
-        .populate('userId', 'name email role')
-        .sort(sortOptions)
-        .skip(skip)
-        .limit(limit);
+      let sortOptions = {};
+      if (sort === 'rating') {
+        sortOptions = { avgRating: -1, _id: 1 };
+      } else if (sort === 'newest') {
+        sortOptions = { createdAt: -1, _id: 1 };
+      } else if (sort === 'experience') {
+        sortOptions = { experienceYears: -1, _id: 1 };
+      } else {
+        sortOptions = { avgRating: -1, _id: 1 }; // Default sort
+      }
+      pipeline.push({ $sort: sortOptions });
     }
+
+    // Add pagination stages
+    pipeline.push({ $skip: skip }, { $limit: limit });
+
+    // Execute aggregation
+    let designers = await DesignerProfile.aggregate(pipeline);
+
+    // Populate user profile info (name, email, role)
+    designers = await DesignerProfile.populate(designers, {
+      path: 'userId',
+      select: 'name email role'
+    });
 
     res.json({
       designers,
@@ -109,7 +123,7 @@ exports.getDesigners = async (req, res) => {
       pages: Math.ceil(total / limit)
     });
   } catch (error) {
-    console.error('getDesigners error:', error);
+    logger.error('getDesigners error', { error: error.message });
     res.status(500).json({ message: 'Server error retrieving designers' });
   }
 };
@@ -128,7 +142,7 @@ exports.getDesignerById = async (req, res) => {
 
     res.json(designer);
   } catch (error) {
-    console.error('getDesignerById error:', error);
+    logger.error('getDesignerById error', { error: error.message });
     res.status(500).json({ message: 'Server error retrieving designer profile' });
   }
 };
@@ -146,6 +160,10 @@ exports.updateDesignerProfile = async (req, res) => {
 
     // Check ownership: req.user._id must match designer.userId
     if (designer.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      logger.warn('Unauthorized attempt to update designer profile', {
+        designerId: designer._id,
+        userId: req.user._id
+      });
       return res.status(403).json({ message: 'You are not authorized to update this profile' });
     }
 
@@ -166,12 +184,13 @@ exports.updateDesignerProfile = async (req, res) => {
     designer.profilePhotoUrl = profilePhotoUrl !== undefined ? profilePhotoUrl : designer.profilePhotoUrl;
 
     await designer.save();
+    logger.info('Designer profile updated', { designerId: designer._id, updatedBy: req.user._id });
 
     // Populate user and return
     const updated = await DesignerProfile.findById(designer._id).populate('userId', 'name email role');
     res.json(updated);
   } catch (error) {
-    console.error('updateDesignerProfile error:', error);
+    logger.error('updateDesignerProfile error', { error: error.message });
     res.status(500).json({ message: 'Server error updating designer profile' });
   }
 };
