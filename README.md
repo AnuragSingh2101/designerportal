@@ -30,4 +30,10 @@ cd frontend
 npm run dev
 ```
 - Starts the Vite server at `http://localhost:5173`.
+<<<<<<< HEAD
 - Open `http://localhost:5173` in your browser.
+=======
+- Open `http://localhost:5173` in your browser.
+
+---
+>>>>>>> a76ae4cb0a1c8e69a7574e51d9e8fc5283958fb4
