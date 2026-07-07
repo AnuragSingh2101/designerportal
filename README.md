@@ -20,8 +20,6 @@ Open a terminal in the backend directory and run:
 cd backend
 npm start
 ```
-- Starts the API server at `http://localhost:5000`.
-- Auto-seeds the database with realistic sample datasets if empty.
 
 ### 2. Run the Frontend React Client
 Open a new terminal in the frontend directory and run:
@@ -29,11 +27,3 @@ Open a new terminal in the frontend directory and run:
 cd frontend
 npm run dev
 ```
-- Starts the Vite server at `http://localhost:5173`.
-<<<<<<< HEAD
-- Open `http://localhost:5173` in your browser.
-=======
-- Open `http://localhost:5173` in your browser.
-
----
->>>>>>> a76ae4cb0a1c8e69a7574e51d9e8fc5283958fb4
