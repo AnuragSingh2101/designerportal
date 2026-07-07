@@ -9,10 +9,10 @@ const Footer = () => {
           <div className="footer-logo-badge">
             <Award size={16} style={{ color: '#ffffff' }} />
           </div>
-          <span style={{ 
+          <span style={{
             fontFamily: 'var(--font-heading)',
-            fontWeight: '700', 
-            fontSize: '16px', 
+            fontWeight: '700',
+            fontSize: '16px',
             letterSpacing: '-0.02em',
             color: 'var(--text-primary)'
           }}>
@@ -23,7 +23,7 @@ const Footer = () => {
           Connecting visionaries with builders. Empowering architectural and interior leads to design the world.
         </p>
         <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px', fontWeight: '500' }} suppressHydrationWarning>
-          &copy; {new Date().getFullYear()} AtelierConnect Inc. All rights reserved. Premium SaaS Platform.
+          &copy; {new Date().getFullYear()} AtelierConnect Inc. All rights reserved.
         </div>
       </div>
     </footer>

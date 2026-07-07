@@ -12,33 +12,6 @@ A full-stack marketplace connecting independent architects and interior designer
 
 ---
 
-## 📂 Folder Structure
-```text
-designer-portal/
-├── backend/
-│   ├── config/
-│   ├── controllers/
-│   ├── middleware/
-│   ├── models/
-│   ├── routes/
-│   ├── scripts/
-│   ├── .env
-│   ├── package.json
-│   └── server.js
-└── frontend/
-    ├── src/
-    │   ├── components/
-    │   ├── context/
-    │   ├── pages/
-    │   ├── utils/
-    │   ├── App.jsx
-    │   ├── index.css
-    │   └── main.jsx
-    └── package.json
-```
-
----
-
 ## 🚀 Running the App Locally
 
 ### 1. Run the Backend REST API
@@ -58,17 +31,3 @@ npm run dev
 ```
 - Starts the Vite server at `http://localhost:5173`.
 - Open `http://localhost:5173` in your browser.
-
----
-
-## 🔑 Seeding Credentials for Testing
-
-You can use the following pre-seeded logins:
-
-| Role | Email | Password | Details |
-|------|-------|----------|---------|
-| **Administrator** | *Configured in backend `.env`* | *Configured in backend `.env`* | Platform Moderation, User suspension, Platform stats |
-| **Designer Lead** | `julian@vancedesign.com` | `password123` | Julian Vance (SF, Architecture & Interior, 12 yrs exp) |
-| **Designer Decorator** | `amelia@cheninteriors.com` | `password123` | Amelia Chen (NYC, Interior-only, Japandi style) |
-| **Client Member** | `sarah@gmail.com` | `password123` | Sarah Jenkins (Seeded inquiries & reviews with Julian) |
-| **Client Member** | `marcus@yahoo.com` | `password123` | Marcus Aurelius (Seeded inquiries with Julian & Brandon) |
