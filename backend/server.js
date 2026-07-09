@@ -28,6 +28,14 @@ const allowedOriginsVal = process.env.ALLOWED_ORIGINS;
 let corsOptions = {};
 if (allowedOriginsVal) {
   const origins = allowedOriginsVal.split(',').map(o => o.trim());
+  // Ensure development and production origins are always permitted
+  const defaultOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://designerportal.vercel.app'];
+  defaultOrigins.forEach(o => {
+    if (!origins.includes(o)) {
+      origins.push(o);
+    }
+  });
+
   corsOptions = {
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl)
