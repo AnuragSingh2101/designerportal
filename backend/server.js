@@ -35,15 +35,15 @@ if (allowedOriginsVal) {
         callback(null, true);
       } else {
         logger.warn('CORS request blocked from origin', { origin });
-        callback(new Error('Not allowed by CORS'));
+        callback(null, false); // Return false instead of throwing error to reject CORS cleanly
       }
     },
     credentials: true
   };
 } else {
-  // In development, default to allowing local origins
+  // In development, default to allowing local origins and the deployed Vercel frontend
   corsOptions = {
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://designerportal.vercel.app'],
     credentials: true
   };
 }
