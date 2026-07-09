@@ -121,12 +121,37 @@ const AdminPanel = () => {
 
       // Remove from state
       setUsers(prev => prev.filter(u => u._id !== userId));
+      // Resolve reports targeting this user in state
+      setReports(prev => prev.map(r => r.targetType === 'user' && r.target?.id === userId ? { ...r, status: 'resolved', target: null } : r));
       // Reload analytics to update counts
       const updatedAnalytics = await apiFetch('/admin/analytics');
       setAnalytics(updatedAnalytics);
     } catch (err) {
       console.error('Delete user error:', err);
       alert('Could not delete user.');
+    }
+  };
+
+  // Delete Project cascadingly by admin
+  const handleDeleteProject = async (projectId) => {
+    if (!window.confirm('Are you sure you want to permanently delete this portfolio project?')) return;
+
+    try {
+      await apiFetch(`/admin/projects/${projectId}`, {
+        method: 'DELETE'
+      });
+
+      alert('Project deleted successfully.');
+
+      // Resolve reports targeting this project in state
+      setReports(prev => prev.map(r => r.targetType === 'project' && r.target?.id === projectId ? { ...r, status: 'resolved', target: null } : r));
+
+      // Reload analytics to update counts
+      const updatedAnalytics = await apiFetch('/admin/analytics');
+      setAnalytics(updatedAnalytics);
+    } catch (err) {
+      console.error('Delete project error:', err);
+      alert('Could not delete project.');
     }
   };
 
@@ -444,11 +469,11 @@ const AdminPanel = () => {
                   <td style={{ padding: '16px 24px', display: 'flex', gap: '12px' }}>
                     {u.role !== 'admin' && (
                       <>
-                        <button onClick={() => handleToggleSuspend(u._id)} className="adminpanel-style-4">
+                        <button type="button" onClick={() => handleToggleSuspend(u._id)} className="adminpanel-style-4">
                           <Ban size={12} />
                           <span>{u.suspended ? 'Unsuspend' : 'Suspend'}</span>
                         </button>
-                        <button onClick={() => handleDeleteUser(u._id)} className="adminpanel-style-5">
+                        <button type="button" onClick={() => handleDeleteUser(u._id)} className="adminpanel-style-5">
                           <Trash2 size={12} />
                           <span>Delete</span>
                         </button>
@@ -470,15 +495,16 @@ const AdminPanel = () => {
               No moderation report logs recorded.
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
                   <th style={{ padding: '16px 24px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date</th>
                   <th style={{ padding: '16px 24px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Flagged By</th>
                   <th style={{ padding: '16px 24px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Type</th>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Reported Target</th>
                   <th style={{ padding: '16px 24px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Reason</th>
                   <th style={{ padding: '16px 24px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</th>
-                  <th style={{ padding: '16px 24px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Action</th>
+                  <th style={{ padding: '16px 24px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -494,7 +520,31 @@ const AdminPanel = () => {
                     <td style={{ padding: '16px 24px', textTransform: 'uppercase', fontSize: '12px', fontWeight: '600' }}>
                       {rep.targetType}
                     </td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)', maxWidth: '280px', wordBreak: 'break-word' }}>
+                    <td style={{ padding: '16px 24px' }}>
+                      {rep.target ? (
+                        rep.targetType === 'user' ? (
+                          <div>
+                            <strong>{rep.target.name}</strong>
+                            <span style={{ fontSize: '12px', color: 'var(--text-light)', display: 'block' }}>
+                              User ({rep.target.role}) • {rep.target.email}
+                            </span>
+                            <span style={{ fontSize: '11px', color: rep.target.suspended ? 'var(--error-text)' : 'var(--success-text)', fontWeight: '600' }}>
+                              {rep.target.suspended ? 'Suspended' : 'Active'}
+                            </span>
+                          </div>
+                        ) : (
+                          <div>
+                            <strong>{rep.target.title}</strong>
+                            <span style={{ fontSize: '12px', color: 'var(--text-light)', display: 'block' }}>
+                              Project by {rep.target.designerName}
+                            </span>
+                          </div>
+                        )
+                      ) : (
+                        <span style={{ color: 'var(--text-light)', fontStyle: 'italic' }}>Deleted content/user</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)', maxWidth: '200px', wordBreak: 'break-word' }}>
                       {rep.reason}
                     </td>
                     <td style={{ padding: '16px 24px' }}>
@@ -503,18 +553,63 @@ const AdminPanel = () => {
                       </span>
                     </td>
                     <td style={{ padding: '16px 24px' }}>
-                      {rep.status === 'open' ? (
-                        <button 
-                          onClick={() => handleResolveReport(rep._id)}
-                          className="btn btn-secondary btn-sm"
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 12px', fontSize: '12px' }}
-                        >
-                          <CheckCircle size={12} />
-                          <span>Resolve</span>
-                        </button>
-                      ) : (
-                        <span style={{ color: 'var(--text-light)', fontSize: '12px' }}>Resolved</span>
-                      )}
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {rep.status === 'open' ? (
+                          <button 
+                            type="button"
+                            onClick={() => handleResolveReport(rep._id)}
+                            className="btn btn-secondary btn-sm"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 12px', fontSize: '12px' }}
+                          >
+                            <CheckCircle size={12} />
+                            <span>Resolve</span>
+                          </button>
+                        ) : (
+                          <span style={{ color: 'var(--text-light)', fontSize: '12px' }}>Resolved</span>
+                        )}
+
+                        {rep.status === 'open' && rep.target && (
+                          rep.targetType === 'user' ? (
+                            <>
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  handleToggleSuspend(rep.target.id);
+                                  setReports(prev => prev.map(r => r.targetType === 'user' && r.target?.id === rep.target.id ? { ...r, target: { ...r.target, suspended: !r.target.suspended } } : r));
+                                }}
+                                className="adminpanel-style-4"
+                                style={{ padding: '6px 10px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}
+                              >
+                                <Ban size={12} />
+                                <span>{rep.target.suspended ? 'Unsuspend' : 'Suspend'}</span>
+                              </button>
+                              <button 
+                                type="button"
+                                onClick={async () => {
+                                  await handleDeleteUser(rep.target.id);
+                                }}
+                                className="adminpanel-style-5"
+                                style={{ padding: '6px 10px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}
+                              >
+                                <Trash2 size={12} />
+                                <span>Delete</span>
+                              </button>
+                            </>
+                          ) : (
+                            <button 
+                              type="button"
+                              onClick={async () => {
+                                await handleDeleteProject(rep.target.id);
+                              }}
+                              className="adminpanel-style-5"
+                              style={{ padding: '6px 10px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}
+                            >
+                              <Trash2 size={12} />
+                              <span>Delete Project</span>
+                            </button>
+                          )
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

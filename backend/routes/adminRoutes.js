@@ -7,7 +7,8 @@ const {
   getAnalytics,
   getReports,
   submitReport,
-  resolveReport
+  resolveReport,
+  deleteProject
 } = require('../controllers/adminController');
 const { authenticateJWT, requireRole } = require('../middleware/auth');
 const { rateLimit } = require('../middleware/rateLimiter');
@@ -39,6 +40,14 @@ router.delete(
   requireRole('admin'),
   validateObjectIdParam,
   deleteUser
+);
+
+router.delete(
+  '/projects/:id',
+  authenticateJWT,
+  requireRole('admin'),
+  validateObjectIdParam,
+  deleteProject
 );
 
 router.get('/analytics', authenticateJWT, requireRole('admin'), getAnalytics);

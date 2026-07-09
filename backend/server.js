@@ -81,13 +81,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// Global error handling middleware (masks system details in production)
 app.use((err, req, res, next) => {
   logger.error('Unhandled application error occurred', {
     message: err.message,
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
-  
+
   res.status(err.status || 500).json({
     message: err.message || 'Something went wrong on the server',
     error: process.env.NODE_ENV === 'development' ? err.message : {}

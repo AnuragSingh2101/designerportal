@@ -129,6 +129,11 @@ exports.deleteUser = async (req, res) => {
     if (user.role === 'designer') {
       const profile = await DesignerProfile.findOne({ userId });
       if (profile) {
+        // Find projects to delete their reports
+        const projects = await PortfolioProject.find({ designerId: profile._id });
+        const projectIds = projects.map(p => p._id);
+        await Report.deleteMany({ targetId: { $in: projectIds }, targetType: 'project' });
+
         // Delete projects
         await PortfolioProject.deleteMany({ designerId: profile._id });
         // Delete inquiries
@@ -146,7 +151,12 @@ exports.deleteUser = async (req, res) => {
     }
 
     // Delete reports created by or targeting this user
-    await Report.deleteMany({ reportedBy: userId });
+    await Report.deleteMany({
+      $or: [
+        { reportedBy: userId },
+        { targetId: userId, targetType: 'user' }
+      ]
+    });
 
     // Delete user
     await User.findByIdAndDelete(userId);
@@ -231,7 +241,47 @@ exports.getReports = async (req, res) => {
       .populate('reportedBy', 'name email')
       .sort({ createdAt: -1 });
 
-    res.json(reports);
+    const populatedReports = await Promise.all(
+      reports.map(async (report) => {
+        const reportObj = report.toObject();
+        if (report.targetType === 'user') {
+          const targetUser = await User.findById(report.targetId).select('name email role suspended');
+          reportObj.target = targetUser
+            ? {
+                type: 'user',
+                id: targetUser._id,
+                name: targetUser.name,
+                email: targetUser.email,
+                role: targetUser.role,
+                suspended: targetUser.suspended
+              }
+            : null;
+        } else if (report.targetType === 'project') {
+          const targetProject = await PortfolioProject.findById(report.targetId);
+          let designerName = 'Unknown Designer';
+          if (targetProject) {
+            const profile = await DesignerProfile.findById(targetProject.designerId);
+            if (profile) {
+              const designerUser = await User.findById(profile.userId);
+              if (designerUser) {
+                designerName = designerUser.name;
+              }
+            }
+          }
+          reportObj.target = targetProject
+            ? {
+                type: 'project',
+                id: targetProject._id,
+                title: targetProject.title,
+                designerName
+              }
+            : null;
+        }
+        return reportObj;
+      })
+    );
+
+    res.json(populatedReports);
   } catch (error) {
     logger.error('getReports admin error', { error: error.message });
     res.status(500).json({ message: 'Server error fetching reports list' });
@@ -289,5 +339,36 @@ exports.resolveReport = async (req, res) => {
   } catch (error) {
     logger.error('resolveReport admin error', { error: error.message });
     res.status(500).json({ message: 'Server error resolving report' });
+  }
+};
+
+// @desc    Delete a project and related reports
+// @route   DELETE /api/admin/projects/:id
+// @access  Private (Admin only)
+exports.deleteProject = async (req, res) => {
+  try {
+    const project = await PortfolioProject.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    const projectId = project._id;
+
+    // Delete reports targeting this project
+    await Report.deleteMany({ targetId: projectId, targetType: 'project' });
+
+    // Delete project
+    await PortfolioProject.findByIdAndDelete(projectId);
+
+    logger.warn(`Portfolio project deleted permanently by admin`, {
+      deletedProjectId: projectId,
+      deletedProjectTitle: project.title,
+      performedBy: req.user._id
+    });
+
+    res.json({ message: 'Project and related reports deleted successfully' });
+  } catch (error) {
+    logger.error('deleteProject admin error', { error: error.message });
+    res.status(500).json({ message: 'Server error deleting project' });
   }
 };

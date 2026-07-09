@@ -74,7 +74,7 @@ exports.register = async (req, res) => {
     logger.info('User registered successfully. Email verification token generated.', {
       userId: user._id,
       email: user.email,
-      verificationToken
+      emailVerificationToken
     });
 
     // Generate token
