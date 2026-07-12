@@ -640,8 +640,8 @@ body.dark-theme .glass-panel {
   font-size: 13px;
   margin-bottom: 20px;
   display: -webkit-box;
-  webkit-line-clamp: 3;
-  webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 54px;
 }
@@ -716,8 +716,8 @@ body.dark-theme .glass-panel {
   font-size: 14px;
   margin-bottom: 20px;
   display: -webkit-box;
-  webkit-line-clamp: 3;
-  webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 67px;
 }

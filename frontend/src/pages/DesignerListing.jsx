@@ -4,6 +4,40 @@ import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
 import { Search, MapPin, SlidersHorizontal, Award, Sparkles, X } from 'lucide-react';
 
+const DesignerCardBio = ({ bio }) => {
+  const [expanded, setExpanded] = useState(false);
+  const maxChars = 140;
+
+  if (!bio) return null;
+  if (bio.length <= maxChars) {
+    return <p className="designerlisting-style-3">{bio}</p>;
+  }
+
+  return (
+    <p className="designerlisting-style-3" style={{ display: 'block', overflow: 'visible', minHeight: '54px' }}>
+      {expanded ? bio : `${bio.substring(0, maxChars)}...`}
+      <button 
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setExpanded(!expanded); }}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: 'var(--color-gold)',
+          fontWeight: '600',
+          cursor: 'pointer',
+          padding: 0,
+          marginLeft: '4px',
+          fontSize: '12px',
+          textTransform: 'none',
+          letterSpacing: 'normal',
+          display: 'inline'
+        }}
+      >
+        {expanded ? 'Read Less' : 'Read More'}
+      </button>
+    </p>
+  );
+};
+
 const DesignerListing = () => {
   const { apiFetch } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -343,9 +377,7 @@ const DesignerListing = () => {
                       <span>{designer.location}</span>
                     </div>
 
-                    <p className="designerlisting-style-3">
-                      {designer.bio}
-                    </p>
+                    <DesignerCardBio bio={designer.bio} />
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: 'auto' }}>
                       <div>

@@ -4,6 +4,40 @@ import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
 import { ChevronRight, ArrowRight, Home as HomeIcon, Briefcase, Sparkles, MapPin } from 'lucide-react';
 
+const DesignerCardBio = ({ bio }) => {
+  const [expanded, setExpanded] = useState(false);
+  const maxChars = 140;
+
+  if (!bio) return null;
+  if (bio.length <= maxChars) {
+    return <p className="home-style-6">{bio}</p>;
+  }
+
+  return (
+    <p className="home-style-6" style={{ display: 'block', overflow: 'visible', minHeight: '67px' }}>
+      {expanded ? bio : `${bio.substring(0, maxChars)}...`}
+      <button 
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setExpanded(!expanded); }}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: 'var(--color-gold)',
+          fontWeight: '600',
+          cursor: 'pointer',
+          padding: 0,
+          marginLeft: '4px',
+          fontSize: '13px',
+          textTransform: 'none',
+          letterSpacing: 'normal',
+          display: 'inline'
+        }}
+      >
+        {expanded ? 'Read Less' : 'Read More'}
+      </button>
+    </p>
+  );
+};
+
 const Home = () => {
   const { apiFetch } = useAuth();
   const [featuredDesigners, setFeaturedDesigners] = useState([]);
@@ -156,7 +190,7 @@ const Home = () => {
                       onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
                       onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
                     />
-                    <div className="home-style-5" style={{backgroundColor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)'}}>
+                    <div className="home-style-5" style={{ backgroundColor: 'rgba(30, 29, 27, 0.85)', color: '#ffffff', backdropFilter: 'blur(4px)', fontWeight: '600' }}>
                       {designer.experienceYears} Years Exp
                     </div>
                   </div>
@@ -194,9 +228,7 @@ const Home = () => {
                       <span>{designer.location}</span>
                     </div>
 
-                    <p className="home-style-6">
-                      {designer.bio}
-                    </p>
+                    <DesignerCardBio bio={designer.bio} />
 
                     {/* Footer Row */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
