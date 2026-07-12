@@ -2,20 +2,20 @@
 
 :root {
   /* Premium travertine and charcoal color palette */
-  --bg-primary: #fbfaf8;      /* Linen / soft bone white */
-  --bg-secondary: #f3f0ea;    /* Travertine grey-warm */
-  --bg-card: #ffffff;         /* Pure white */
-  --text-primary: #1e1d1b;    /* Deep onyx/charcoal */
-  --text-secondary: #5c5954;  /* Muted earth-grey */
-  --text-light: #8e8a83;      /* Light placeholder-grey */
-  
-  --color-gold: #bda37e;      /* Luxe gold/bronze accent */
+  --bg-primary: #fbfaf8;
+  --bg-secondary: #f3f0ea;
+  --bg-card: #ffffff;
+  --text-primary: #1e1d1b;
+  --text-secondary: #5c5954;
+  --text-light: #8e8a83;
+
+  --color-gold: #bda37e;
   --color-gold-hover: #a38965;
   --color-gold-light: #f5f1ea;
-  
+
   --border-color: #e5e0d8;
   --border-focus: #bda37e;
-  
+
   /* Status Colors */
   --status-pending-bg: #fdf5e6;
   --status-pending-text: #b8860b;
@@ -23,7 +23,7 @@
   --status-responded-text: #096dd9;
   --status-closed-bg: #f6ffed;
   --status-closed-text: #389e0d;
-  
+
   --error-bg: #fff1f0;
   --error-text: #cf1322;
   --success-bg: #f6ffed;
@@ -57,14 +57,14 @@ body.dark-theme {
   --text-primary: #f2edf9;
   --text-secondary: #a9a297;
   --text-light: #7b756b;
-  
+
   --color-gold: #d7b58a;
   --color-gold-hover: #e8c69b;
   --color-gold-light: #28231c;
-  
+
   --border-color: #2e2a24;
   --border-focus: #d7b58a;
-  
+
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.5);
@@ -96,7 +96,10 @@ a {
   transition: var(--transition-smooth);
 }
 
-button, input, textarea, select {
+button,
+input,
+textarea,
+select {
   font-family: inherit;
 }
 
@@ -124,7 +127,12 @@ button, input, textarea, select {
 }
 
 /* Typography styles */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-sans);
   font-weight: 600;
   line-height: 1.25;
@@ -322,15 +330,20 @@ textarea.form-input {
   .grid-3 {
     grid-template-columns: repeat(2, 1fr);
   }
+
   .grid-4 {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 600px) {
-  .grid-2, .grid-3, .grid-4 {
+
+  .grid-2,
+  .grid-3,
+  .grid-4 {
     grid-template-columns: 1fr;
   }
+
   .section-padding {
     padding: 40px 0;
   }
@@ -410,6 +423,7 @@ body.dark-theme .glass-panel {
     grid-template-columns: 1fr;
     gap: 24px;
   }
+
   .dashboard-sidebar {
     position: static;
   }
