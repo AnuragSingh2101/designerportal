@@ -21,6 +21,8 @@ const DesignerOnboarding = () => {
   const [budgetMax, setBudgetMax] = useState(50000);
   const [bio, setBio] = useState('');
   const [profilePhotoUrl, setProfilePhotoUrl] = useState('');
+  const [licenseType, setLicenseType] = useState('');
+  const [licenseNumber, setLicenseNumber] = useState('');
 
   // Initial Project states
   const [projectTitle, setProjectTitle] = useState('');
@@ -49,6 +51,8 @@ const DesignerOnboarding = () => {
           setBudgetMax(data.budgetMax);
           setBio(data.bio);
           setProfilePhotoUrl(data.profilePhotoUrl);
+          setLicenseType(data.licenseType || '');
+          setLicenseNumber(data.licenseNumber || '');
         } catch (err) {
           console.error('Error loading designer details:', err);
         }
@@ -128,7 +132,9 @@ const DesignerOnboarding = () => {
           budgetMin: Number(budgetMin),
           budgetMax: Number(budgetMax),
           bio,
-          profilePhotoUrl: profilePhotoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200'
+          profilePhotoUrl: profilePhotoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200',
+          licenseType,
+          licenseNumber
         })
       });
 
@@ -265,6 +271,30 @@ const DesignerOnboarding = () => {
                   value={budgetMax}
                   onChange={(e) => setBudgetMax(e.target.value)}
                   required
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div className="form-group">
+                <label className="form-label">Accreditation Type (e.g. AIA, NCIDQ)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. AIA"
+                  className="form-input"
+                  value={licenseType}
+                  onChange={(e) => setLicenseType(e.target.value)}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Accreditation License # (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. AIA-98310"
+                  className="form-input"
+                  value={licenseNumber}
+                  onChange={(e) => setLicenseNumber(e.target.value)}
                 />
               </div>
             </div>

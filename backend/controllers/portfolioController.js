@@ -6,7 +6,18 @@ const DesignerProfile = require('../models/DesignerProfile');
 // @access  Private (Designer only)
 exports.createProject = async (req, res) => {
   try {
-    const { title, description, images, style, category } = req.body;
+    const { 
+      title, 
+      description, 
+      images, 
+      style, 
+      category,
+      beforeAfterImages,
+      budgetTier,
+      roomType,
+      specifications,
+      caseStudyDetails
+    } = req.body;
 
     if (!title || !description || !images || !style || !category) {
       return res.status(400).json({ message: 'Please provide title, description, images, style, and category' });
@@ -24,7 +35,12 @@ exports.createProject = async (req, res) => {
       description,
       images,
       style,
-      category
+      category,
+      beforeAfterImages: beforeAfterImages || { before: '', after: '' },
+      budgetTier: budgetTier || 'Medium',
+      roomType: roomType || 'Whole House',
+      specifications: specifications || { durationWeeks: 0, costUSD: 0, materialsUsed: [] },
+      caseStudyDetails: caseStudyDetails || { objectives: '', challenges: '', solutions: '' }
     });
 
     res.status(201).json(project);
@@ -55,13 +71,30 @@ exports.updateProject = async (req, res) => {
       return res.status(403).json({ message: 'You are not authorized to edit this project' });
     }
 
-    const { title, description, images, style, category } = req.body;
+    const { 
+      title, 
+      description, 
+      images, 
+      style, 
+      category,
+      beforeAfterImages,
+      budgetTier,
+      roomType,
+      specifications,
+      caseStudyDetails
+    } = req.body;
 
     project.title = title !== undefined ? title : project.title;
     project.description = description !== undefined ? description : project.description;
     project.images = images !== undefined ? images : project.images;
     project.style = style !== undefined ? style : project.style;
     project.category = category !== undefined ? category : project.category;
+    
+    project.beforeAfterImages = beforeAfterImages !== undefined ? beforeAfterImages : project.beforeAfterImages;
+    project.budgetTier = budgetTier !== undefined ? budgetTier : project.budgetTier;
+    project.roomType = roomType !== undefined ? roomType : project.roomType;
+    project.specifications = specifications !== undefined ? specifications : project.specifications;
+    project.caseStudyDetails = caseStudyDetails !== undefined ? caseStudyDetails : project.caseStudyDetails;
 
     await project.save();
 

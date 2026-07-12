@@ -3,7 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
 import Lightbox from '../components/Lightbox';
-import { MapPin, Briefcase, Calendar, Star, DollarSign, Send, MessageSquare, AlertCircle, AlertTriangle } from 'lucide-react';
+import BeforeAfterSlider from '../components/BeforeAfterSlider';
+import { MapPin, Briefcase, Calendar, Star, DollarSign, Send, MessageSquare, AlertCircle, AlertTriangle, Clock, Layers, Hammer, Shield } from 'lucide-react';
 
 const PortfolioDetail = () => {
   const { id } = useParams();
@@ -243,7 +244,28 @@ const PortfolioDetail = () => {
           <div style={{ flex: 1, minWidth: '300px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '16px' }}>
               <div>
-                <h1 className="serif-title" style={{ fontSize: '32px' }}>{designer.userId?.name}</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <h1 className="serif-title" style={{ fontSize: '32px' }}>{designer.userId?.name}</h1>
+                  {designer.isVerified && (
+                    <span 
+                      title={`Verified Designer (${designer.licenseType}) - License #${designer.licenseNumber}`}
+                      style={{
+                        backgroundColor: 'var(--color-gold)',
+                        color: '#ffffff',
+                        padding: '4px 10px',
+                        borderRadius: '20px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Shield size={12} fill="#ffffff" />
+                      <span>{designer.licenseType} Verified</span>
+                    </span>
+                  )}
+                </div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
                   {designer.expertise.map(exp => (
                     <span key={exp} className="portfoliodetail-style-1">
@@ -334,49 +356,187 @@ const PortfolioDetail = () => {
             <span style={{ color: 'var(--text-light)', fontSize: '14px' }}>No projects under the "{activeCategory}" category listed yet.</span>
           </div>
         ) : (
-          <div className="grid-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '56px' }}>
             {filteredProjects.map((project) => (
-              <div key={project._id} className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                {/* Main image */}
-                <div style={{ height: '240px', position: 'relative', overflow: 'hidden' }}>
-                  <img 
-                    src={project.images[0]} 
-                    alt={project.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
-                    onClick={() => openLightbox(project.images, 0)}
-                  />
-                  <div className="portfoliodetail-style-5" style={{backgroundColor: 'rgba(30, 29, 27, 0.75)'}}>
-                    {project.style}
+              <div 
+                key={project._id} 
+                className="card" 
+                style={{ 
+                  padding: '36px', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '24px', 
+                  backgroundColor: 'var(--bg-card)', 
+                  border: '1px solid var(--border-color)' 
+                }}
+              >
+                {/* Case Study Header Row */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '24px', fontWeight: '500', fontFamily: 'var(--font-serif)', fontStyle: 'italic' }}>{project.title}</h3>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                      <span className="tag-pill" style={{ backgroundColor: 'var(--color-gold-light)', color: 'var(--color-gold)', padding: '2px 8px', fontSize: '11px', fontWeight: '600', borderRadius: '4px', textTransform: 'uppercase' }}>
+                        {project.category}
+                      </span>
+                      <span className="tag-pill" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)', padding: '2px 8px', fontSize: '11px', fontWeight: '600', borderRadius: '4px', textTransform: 'uppercase' }}>
+                        {project.style}
+                      </span>
+                      {project.roomType && (
+                        <span className="tag-pill" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)', padding: '2px 8px', fontSize: '11px', fontWeight: '600', borderRadius: '4px', textTransform: 'uppercase' }}>
+                          {project.roomType}
+                        </span>
+                      )}
+                      {project.budgetTier && (
+                        <span className="tag-pill" style={{ backgroundColor: 'var(--color-gold-light)', color: 'var(--color-gold)', padding: '2px 8px', fontSize: '11px', fontWeight: '600', borderRadius: '4px', textTransform: 'uppercase' }}>
+                          {project.budgetTier} Tier
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Body details */}
-                <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <h3 style={{ fontSize: '16px', marginBottom: '8px' }}>{project.title}</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '16px' }}>
-                    {project.description}
-                  </p>
+                {/* Main Visual & Overview Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '32px', alignItems: 'start' }} className="grid-2-to-1">
+                  <style>{`
+                    @media (max-width: 900px) {
+                      .grid-2-to-1 {
+                        grid-template-columns: 1fr !important;
+                      }
+                    }
+                  `}</style>
+                  
+                  {/* Visual Element (Before/After Slider or Primary Image) */}
+                  <div>
+                    {project.beforeAfterImages && project.beforeAfterImages.before && project.beforeAfterImages.after ? (
+                      <BeforeAfterSlider 
+                        beforeImage={project.beforeAfterImages.before} 
+                        afterImage={project.beforeAfterImages.after} 
+                        height="320px" 
+                      />
+                    ) : (
+                      <div style={{ height: '320px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-color)', position: 'relative' }}>
+                        <img 
+                          src={project.images[0]} 
+                          alt={project.title}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer', transition: 'var(--transition-smooth)' }}
+                          onClick={() => openLightbox(project.images, 0)}
+                          onMouseEnter={(e) => e.target.style.transform = 'scale(1.03)'}
+                          onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                        />
+                      </div>
+                    )}
+                  </div>
 
-                  {/* Thumbnail Row */}
-                  {project.images.length > 1 && (
-                    <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
-                      {project.images.slice(1, 4).map((img, idx) => (
+                  {/* Overview & Project Specs Card */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div>
+                      <h4 style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.5px', marginBottom: '6px' }}>Project Narrative</h4>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6' }}>
+                        {project.description}
+                      </p>
+                    </div>
+
+                    {/* Specifications box */}
+                    {project.specifications && (project.specifications.durationWeeks || project.specifications.costUSD || (project.specifications.materialsUsed && project.specifications.materialsUsed.length > 0)) && (
+                      <div style={{ backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <h5 style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-primary)', letterSpacing: '0.5px', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>Technical Specifications</h5>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+                          {project.specifications.durationWeeks > 0 && (
+                            <div>
+                              <span style={{ fontSize: '11px', color: 'var(--text-light)', display: 'block' }}>Timeline</span>
+                              <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{project.specifications.durationWeeks} Weeks</strong>
+                            </div>
+                          )}
+                          {project.specifications.costUSD > 0 && (
+                            <div>
+                              <span style={{ fontSize: '11px', color: 'var(--text-light)', display: 'block' }}>Project Value</span>
+                              <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>${project.specifications.costUSD.toLocaleString()}</strong>
+                            </div>
+                          )}
+                        </div>
+                        {project.specifications.materialsUsed && project.specifications.materialsUsed.length > 0 && (
+                          <div style={{ marginTop: '4px' }}>
+                            <span style={{ fontSize: '11px', color: 'var(--text-light)', display: 'block', marginBottom: '4px' }}>Material Palette</span>
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                              {project.specifications.materialsUsed.map(mat => (
+                                <span key={mat} style={{ fontSize: '10px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '2px 6px', borderRadius: '4px', color: 'var(--text-secondary)' }}>
+                                  {mat}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Case Study Details (Objectives, Challenges, Solutions) */}
+                {project.caseStudyDetails && (project.caseStudyDetails.objectives || project.caseStudyDetails.challenges || project.caseStudyDetails.solutions) && (
+                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '24px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }} className="grid-3-to-1">
+                    <style>{`
+                      @media (max-width: 768px) {
+                        .grid-3-to-1 {
+                          grid-template-columns: 1fr !important;
+                          gap: 16px !important;
+                        }
+                      }
+                    `}</style>
+                    {project.caseStudyDetails.objectives && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-gold)' }}>
+                          <Layers size={14} />
+                          <h5 style={{ fontSize: '13px', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Objectives</h5>
+                        </div>
+                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                          {project.caseStudyDetails.objectives}
+                        </p>
+                      </div>
+                    )}
+                    {project.caseStudyDetails.challenges && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-gold)' }}>
+                          <Clock size={14} />
+                          <h5 style={{ fontSize: '13px', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Challenges</h5>
+                        </div>
+                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                          {project.caseStudyDetails.challenges}
+                        </p>
+                      </div>
+                    )}
+                    {project.caseStudyDetails.solutions && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-gold)' }}>
+                          <Hammer size={14} />
+                          <h5 style={{ fontSize: '13px', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.5px' }}>Solutions</h5>
+                        </div>
+                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                          {project.caseStudyDetails.solutions}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Project Gallery Thumbnails */}
+                {project.images && project.images.length > 0 && (
+                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                    <h5 style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-light)', letterSpacing: '0.5px', marginBottom: '8px' }}>Project Photo Gallery</h5>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                      {project.images.map((img, idx) => (
                         <div 
                           key={img} 
-                          style={{ width: '48px', height: '48px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-color)', cursor: 'pointer' }}
-                          onClick={() => openLightbox(project.images, idx + 1)}
+                          style={{ width: '64px', height: '64px', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border-color)', cursor: 'pointer', transition: 'var(--transition-smooth)' }}
+                          onClick={() => openLightbox(project.images, idx)}
+                          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                         >
-                          <img src={img} alt="thumbnail" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={img} alt={`thumbnail-${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                       ))}
-                      {project.images.length > 4 && (
-                        <div className="portfoliodetail-style-6" onClick={() => openLightbox(project.images, 3)}>
-                          +{project.images.length - 4}
-                        </div>
-                      )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

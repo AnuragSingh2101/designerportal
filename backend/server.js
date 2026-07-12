@@ -17,6 +17,8 @@ const portfolioRoutes = require('./routes/portfolioRoutes');
 const inquiryRoutes = require('./routes/inquiryRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const inspirationRoutes = require('./routes/inspirationRoutes');
+const articleRoutes = require('./routes/articleRoutes');
 
 const app = express();
 
@@ -79,6 +81,8 @@ app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/inspiration', inspirationRoutes);
+app.use('/api/articles', articleRoutes);
 
 // Base Route
 app.get('/', (req, res) => {

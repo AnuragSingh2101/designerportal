@@ -313,7 +313,28 @@ const DesignerListing = () => {
                   {/* Body details */}
                   <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '6px' }}>
-                      <h3 style={{ fontSize: '16px' }}>{designer.userId?.name}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <h3 style={{ fontSize: '16px' }}>{designer.userId?.name}</h3>
+                        {designer.isVerified && (
+                          <span 
+                            title={`${designer.licenseType || 'AIA'} Verified`} 
+                            style={{
+                              backgroundColor: 'var(--color-gold)',
+                              color: '#ffffff',
+                              borderRadius: '50%',
+                              width: '15px',
+                              height: '15px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '9px',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            ✓
+                          </span>
+                        )}
+                      </div>
                       <StarRating rating={designer.avgRating} size={12} />
                     </div>
 

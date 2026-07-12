@@ -46,6 +46,18 @@ const DesignerProfileSchema = new mongoose.Schema({
     min: 0,
     max: 5
   },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  licenseType: {
+    type: String,
+    default: '' // e.g. 'AIA', 'NCIDQ'
+  },
+  licenseNumber: {
+    type: String,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now

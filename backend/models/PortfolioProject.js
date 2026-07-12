@@ -32,6 +32,30 @@ const PortfolioProjectSchema = new mongoose.Schema({
     enum: ['Residential', 'Commercial', 'Renovation', 'Landscape', 'Other'],
     default: 'Residential'
   },
+  beforeAfterImages: {
+    before: { type: String, default: '' },
+    after: { type: String, default: '' }
+  },
+  budgetTier: {
+    type: String,
+    enum: ['Basic', 'Medium', 'Premium', 'Luxury'],
+    default: 'Medium'
+  },
+  roomType: {
+    type: String,
+    enum: ['Living Room', 'Kitchen', 'Bedroom', 'Bathroom', 'Outdoor', 'Office', 'Whole House'],
+    default: 'Whole House'
+  },
+  specifications: {
+    durationWeeks: { type: Number },
+    costUSD: { type: Number },
+    materialsUsed: [{ type: String }]
+  },
+  caseStudyDetails: {
+    objectives: { type: String },
+    challenges: { type: String },
+    solutions: { type: String }
+  },
   createdAt: {
     type: Date,
     default: Date.now

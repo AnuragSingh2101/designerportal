@@ -16,6 +16,9 @@ import ClientDashboard from './pages/ClientDashboard';
 import DesignerDashboard from './pages/DesignerDashboard';
 import DesignerOnboarding from './pages/DesignerOnboarding';
 import AdminPanel from './pages/AdminPanel';
+import InspirationSandbox from './pages/InspirationSandbox';
+import BlogHub from './pages/BlogHub';
+import BlogPost from './pages/BlogPost';
 
 // Route Guard Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -51,6 +54,9 @@ function AppContent() {
           <Route path="/login" element={<LoginRegister />} />
           <Route path="/designers" element={<DesignerListing />} />
           <Route path="/designers/:id" element={<PortfolioDetail />} />
+          <Route path="/inspiration" element={<InspirationSandbox />} />
+          <Route path="/blog" element={<BlogHub />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
 
           {/* Client Guard Routes */}
           <Route 

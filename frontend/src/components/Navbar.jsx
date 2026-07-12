@@ -72,6 +72,44 @@ const Navbar = () => {
             )}
           </Link>
 
+          <Link
+            to="/inspiration"
+            className="navbar-link"
+            style={{ gap: '6px', color: isActive('/inspiration') ? 'var(--color-primary)' : 'var(--text-secondary)' }}
+          >
+            <span>Inspiration</span>
+            {isActive('/inspiration') && (
+              <span style={{
+                position: 'absolute',
+                bottom: '-2px',
+                left: '0',
+                right: '0',
+                height: '2px',
+                background: 'linear-gradient(90deg, #bda37e, #d7b58a)',
+                borderRadius: '2px'
+              }} />
+            )}
+          </Link>
+
+          <Link
+            to="/blog"
+            className="navbar-link"
+            style={{ gap: '6px', color: isActive('/blog') ? 'var(--color-primary)' : 'var(--text-secondary)' }}
+          >
+            <span>Journal</span>
+            {isActive('/blog') && (
+              <span style={{
+                position: 'absolute',
+                bottom: '-2px',
+                left: '0',
+                right: '0',
+                height: '2px',
+                background: 'linear-gradient(90deg, #bda37e, #d7b58a)',
+                borderRadius: '2px'
+              }} />
+            )}
+          </Link>
+
           {user && (
             <>
               {user.role === 'client' && (

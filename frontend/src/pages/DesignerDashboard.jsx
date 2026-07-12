@@ -95,6 +95,18 @@ const DesignerDashboard = () => {
   const [crudError, setCrudError] = useState('');
   const [submittingCrud, setSubmittingCrud] = useState(false);
 
+  // Extended Case Study states
+  const [budgetTier, setBudgetTier] = useState('Medium');
+  const [roomType, setRoomType] = useState('Whole House');
+  const [beforeImage, setBeforeImage] = useState('');
+  const [afterImage, setAfterImage] = useState('');
+  const [durationWeeks, setDurationWeeks] = useState('');
+  const [costUSD, setCostUSD] = useState('');
+  const [materialsUsedStr, setMaterialsUsedStr] = useState('');
+  const [objectives, setObjectives] = useState('');
+  const [challenges, setChallenges] = useState('');
+  const [solutions, setSolutions] = useState('');
+
   const loadDesignerStudioData = async () => {
     if (!designerProfileId) {
       // Redirect to onboarding if profileId doesn't exist
@@ -172,6 +184,16 @@ const DesignerDashboard = () => {
     setProjectStyle('Modern');
     setProjectCategory('Residential');
     setProjectImagesStr('');
+    setBudgetTier('Medium');
+    setRoomType('Whole House');
+    setBeforeImage('');
+    setAfterImage('');
+    setDurationWeeks('');
+    setCostUSD('');
+    setMaterialsUsedStr('');
+    setObjectives('');
+    setChallenges('');
+    setSolutions('');
     setCrudError('');
     setShowProjectModal(true);
   };
@@ -184,6 +206,16 @@ const DesignerDashboard = () => {
     setProjectStyle(proj.style);
     setProjectCategory(proj.category);
     setProjectImagesStr(proj.images.join(', '));
+    setBudgetTier(proj.budgetTier || 'Medium');
+    setRoomType(proj.roomType || 'Whole House');
+    setBeforeImage(proj.beforeAfterImages?.before || '');
+    setAfterImage(proj.beforeAfterImages?.after || '');
+    setDurationWeeks(proj.specifications?.durationWeeks || '');
+    setCostUSD(proj.specifications?.costUSD || '');
+    setMaterialsUsedStr(proj.specifications?.materialsUsed ? proj.specifications.materialsUsed.join(', ') : '');
+    setObjectives(proj.caseStudyDetails?.objectives || '');
+    setChallenges(proj.caseStudyDetails?.challenges || '');
+    setSolutions(proj.caseStudyDetails?.solutions || '');
     setCrudError('');
     setShowProjectModal(true);
   };
@@ -217,7 +249,23 @@ const DesignerDashboard = () => {
         description: projectDesc,
         style: projectStyle,
         category: projectCategory,
-        images: imagesArray
+        images: imagesArray,
+        budgetTier,
+        roomType,
+        beforeAfterImages: {
+          before: beforeImage,
+          after: afterImage
+        },
+        specifications: {
+          durationWeeks: durationWeeks ? Number(durationWeeks) : 0,
+          costUSD: costUSD ? Number(costUSD) : 0,
+          materialsUsed: materialsUsedStr ? materialsUsedStr.split(',').map(m => m.trim()).filter(Boolean) : []
+        },
+        caseStudyDetails: {
+          objectives,
+          challenges,
+          solutions
+        }
       };
 
       if (editingProjectId) {
@@ -648,90 +696,244 @@ const DesignerDashboard = () => {
 
       {/* CRUD Project Modal */}
       {showProjectModal && (
-        <div className="designerdashboard-style-8" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-          <div className="card" style={{ width: '100%', maxWidth: '540px', padding: '30px' }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ fontSize: '18px', marginBottom: '20px' }}>
-              {editingProjectId ? 'Edit Project Showcase' : 'Add New Portfolio Project'}
+        <div className="designerdashboard-style-8" style={{backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1200}}>
+          <div className="card" style={{ width: '100%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto', padding: '30px' }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '18px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+              {editingProjectId ? 'Edit Project Case Study' : 'Add New Portfolio Case Study'}
             </h3>
 
             {crudError && <div className="alert alert-danger">{crudError}</div>}
 
             <form onSubmit={handleProjectSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div className="form-group">
-                <label className="form-label">Project Title</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  placeholder="e.g. Modern Minimalist Kitchen" 
-                  value={projectTitle}
-                  onChange={(e) => setProjectTitle(e.target.value)}
-                  disabled={submittingCrud}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              {/* SECTION 1: Basic Info */}
+              <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--color-gold)', display: 'block', marginBottom: '12px', textTransform: 'uppercase' }}>1. General Scoping</span>
+                
                 <div className="form-group">
-                  <label className="form-label">Design Style</label>
+                  <label className="form-label">Project Title</label>
                   <input 
                     type="text" 
                     className="form-input" 
-                    placeholder="e.g. Mid-Century, Scandinavian" 
-                    value={projectStyle}
-                    onChange={(e) => setProjectStyle(e.target.value)}
+                    placeholder="e.g. The Biophilic Cliffside Estate" 
+                    value={projectTitle}
+                    onChange={(e) => setProjectTitle(e.target.value)}
                     disabled={submittingCrud}
                     required
                   />
                 </div>
-                
-                <div className="form-group">
-                  <label className="form-label">Category</label>
-                  <select 
-                    className="form-input"
-                    value={projectCategory}
-                    onChange={(e) => setProjectCategory(e.target.value)}
-                    disabled={submittingCrud}
-                  >
-                    <option value="Residential">Residential</option>
-                    <option value="Commercial">Commercial</option>
-                    <option value="Renovation">Renovation</option>
-                    <option value="Landscape">Landscape</option>
-                    <option value="Other">Other</option>
-                  </select>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Design Style</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="e.g. Japandi, Biophilic, Modern" 
+                      value={projectStyle}
+                      onChange={(e) => setProjectStyle(e.target.value)}
+                      disabled={submittingCrud}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Category</label>
+                    <select 
+                      className="form-input"
+                      value={projectCategory}
+                      onChange={(e) => setProjectCategory(e.target.value)}
+                      disabled={submittingCrud}
+                    >
+                      <option value="Residential">Residential</option>
+                      <option value="Commercial">Commercial</option>
+                      <option value="Renovation">Renovation</option>
+                      <option value="Landscape">Landscape</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Room Designation</label>
+                    <select 
+                      className="form-input"
+                      value={roomType}
+                      onChange={(e) => setRoomType(e.target.value)}
+                      disabled={submittingCrud}
+                    >
+                      <option value="Whole House">Whole House</option>
+                      <option value="Living Room">Living Room</option>
+                      <option value="Kitchen">Kitchen</option>
+                      <option value="Bedroom">Bedroom</option>
+                      <option value="Bathroom">Bathroom</option>
+                      <option value="Outdoor">Outdoor</option>
+                      <option value="Office">Office</option>
+                    </select>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Budget Tier</label>
+                    <select 
+                      className="form-input"
+                      value={budgetTier}
+                      onChange={(e) => setBudgetTier(e.target.value)}
+                      disabled={submittingCrud}
+                    >
+                      <option value="Basic">Basic Tier</option>
+                      <option value="Medium">Medium Tier</option>
+                      <option value="Premium">Premium Tier</option>
+                      <option value="Luxury">Luxury Tier</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Portfolio Image URLs (comma-separated)</label>
-                <textarea 
-                  className="form-input" 
-                  placeholder="Provide image web addresses, e.g:&#10;https://images.unsplash.com/photo-1, https://images.unsplash.com/photo-2" 
-                  value={projectImagesStr}
-                  onChange={(e) => setProjectImagesStr(e.target.value)}
-                  disabled={submittingCrud}
-                  style={{ minHeight: '80px' }}
-                  required
-                />
+              {/* SECTION 2: Media */}
+              <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--color-gold)', display: 'block', marginBottom: '12px', textTransform: 'uppercase' }}>2. Media Portfolio</span>
+                
+                <div className="form-group">
+                  <label className="form-label">Image URLs (comma-separated)</label>
+                  <textarea 
+                    className="form-input" 
+                    placeholder="Provide URL list, e.g: https://images.unsplash.com/photo-1, https://images.unsplash.com/photo-2" 
+                    value={projectImagesStr}
+                    onChange={(e) => setProjectImagesStr(e.target.value)}
+                    disabled={submittingCrud}
+                    style={{ minHeight: '60px' }}
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Before Image URL (Optional)</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="https://image-before.jpg" 
+                      value={beforeImage}
+                      onChange={(e) => setBeforeImage(e.target.value)}
+                      disabled={submittingCrud}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">After Image URL (Optional)</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="https://image-after.jpg" 
+                      value={afterImage}
+                      onChange={(e) => setAfterImage(e.target.value)}
+                      disabled={submittingCrud}
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Project Description</label>
-                <textarea 
-                  className="form-input" 
-                  placeholder="Describe structural blueprints, textiles, wood finishes..." 
-                  value={projectDesc}
-                  onChange={(e) => setProjectDesc(e.target.value)}
-                  disabled={submittingCrud}
-                  required
-                />
+              {/* SECTION 3: Technical Specifications */}
+              <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--color-gold)', display: 'block', marginBottom: '12px', textTransform: 'uppercase' }}>3. Technical Specs</span>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Duration (weeks)</label>
+                    <input 
+                      type="number" 
+                      className="form-input" 
+                      placeholder="e.g. 12" 
+                      value={durationWeeks}
+                      onChange={(e) => setDurationWeeks(e.target.value)}
+                      disabled={submittingCrud}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Project Cost (USD)</label>
+                    <input 
+                      type="number" 
+                      className="form-input" 
+                      placeholder="e.g. 45000" 
+                      value={costUSD}
+                      onChange={(e) => setCostUSD(e.target.value)}
+                      disabled={submittingCrud}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Material Palette (comma-separated)</label>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    placeholder="e.g. Travertine, White Oak, Terrazzo, Brass" 
+                    value={materialsUsedStr}
+                    onChange={(e) => setMaterialsUsedStr(e.target.value)}
+                    disabled={submittingCrud}
+                  />
+                </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-                <button type="submit" className="btn btn-primary btn-sm" style={{ flex: 1 }} disabled={submittingCrud}>
-                  <Save size={12} />
-                  <span>{submittingCrud ? 'Saving...' : 'Save Project'}</span>
+              {/* SECTION 4: Case Study Narrative */}
+              <div>
+                <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--color-gold)', display: 'block', marginBottom: '12px', textTransform: 'uppercase' }}>4. Case Study Narrative</span>
+
+                <div className="form-group">
+                  <label className="form-label">General Description</label>
+                  <textarea 
+                    className="form-input" 
+                    placeholder="Provide a general summary of design highlights, textures, and final look..." 
+                    value={projectDesc}
+                    onChange={(e) => setProjectDesc(e.target.value)}
+                    disabled={submittingCrud}
+                    style={{ minHeight: '60px' }}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Design Objectives</label>
+                  <textarea 
+                    className="form-input" 
+                    placeholder="What did the client request? What was the space planning goal?" 
+                    value={objectives}
+                    onChange={(e) => setObjectives(e.target.value)}
+                    disabled={submittingCrud}
+                    style={{ minHeight: '50px' }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Spatial & Budget Challenges</label>
+                  <textarea 
+                    className="form-input" 
+                    placeholder="Detail building restrictions, plumbing constraints, or tight structural dimensions..." 
+                    value={challenges}
+                    onChange={(e) => setChallenges(e.target.value)}
+                    disabled={submittingCrud}
+                    style={{ minHeight: '50px' }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Implemented Solutions</label>
+                  <textarea 
+                    className="form-input" 
+                    placeholder="What layout options, materials, and engineering tactics resolved the issues?" 
+                    value={solutions}
+                    onChange={(e) => setSolutions(e.target.value)}
+                    disabled={submittingCrud}
+                    style={{ minHeight: '50px' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={submittingCrud}>
+                  <Save size={14} />
+                  <span>{submittingCrud ? 'Saving...' : 'Save Case Study'}</span>
                 </button>
-                <button type="button" onClick={() => setShowProjectModal(false)} className="btn btn-secondary btn-sm" disabled={submittingCrud}>
+                <button type="button" onClick={() => setShowProjectModal(false)} className="btn btn-secondary" disabled={submittingCrud}>
                   Cancel
                 </button>
               </div>
